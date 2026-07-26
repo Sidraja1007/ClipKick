@@ -1,0 +1,6 @@
+{
+  "outputDirectory": "client",
+  "rewrites": [
+    { "source": "/", "destination": "/ClipKick.dc.html" }
+  ]
+}

@@ -407,6 +407,11 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // When the frontend is hosted separately from the backend (e.g. static site on
+    // Vercel, API server on Render/Railway), set this to the backend's full URL.
+    // Leave empty when frontend and backend are served from the same origin (local dev).
+    const API_BASE = "";
+
     const profile = { name: "", position: "Forward", team: "" };
     const reelHistory = [];
     let selectedReelId = null;
@@ -525,7 +530,7 @@
       form.append("video", reelFlowFile.file);
 
       try {
-        const res = await fetch("/api/highlight-reel", { method: "POST", body: form });
+        const res = await fetch(`${API_BASE}/api/highlight-reel`, { method: "POST", body: form });
         if (!res.ok) throw new Error(`highlight-reel ${res.status}`);
         const data = await res.json();
         generatedReel = {
@@ -657,7 +662,7 @@
 
     async function askCoach(userText) {
       const history = coachMessages.slice(-8).filter(m => m.text !== "…");
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, history }),
@@ -694,7 +699,7 @@
       const root = document.getElementById("drillListRoot");
       root.innerHTML = `<div class="disclaimer" style="margin-top:16px;">Getting drills…</div>`;
       try {
-        const res = await fetch("/api/training-tips", {
+        const res = await fetch(`${API_BASE}/api/training-tips`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ focus }),
@@ -730,7 +735,7 @@
       const credits = reelHistory.flatMap(r => r.credits);
       const improve = reelHistory.flatMap(r => r.improve);
       try {
-        const res = await fetch("/api/monthly-checkin", {
+        const res = await fetch(`${API_BASE}/api/monthly-checkin`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reelCount: reelHistory.length, credits, improve }),
