@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClipKick — AI Highlight Reels for Soccer Players</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0b0f;
+      --bg-elevated: #12141a;
+      --bg-card: #181b24;
+      --bg-hover: #1f2330;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f4f4f6;
+      --text-muted: #8b90a0;
+      --text-dim: #5c6170;
+      --accent: #ff5c35;
+      --accent-soft: rgba(255, 92, 53, 0.15);
+      --accent-glow: rgba(255, 92, 53, 0.35);
+      --success: #3dd68c;
+      --blue: #5b8def;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      --sidebar-w: 240px;
+      --nav-h: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+    .sidebar {
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #ff8a65);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
+    }
+
+    .logo-text { font-weight: 700; font-size: 18px; letter-spacing: 0.06em; }
+    .logo-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 16px 12px 8px; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 12px; border-radius: var(--radius-sm);
+      color: var(--text-muted); cursor: pointer;
+      transition: all 0.15s ease; border: none; background: none;
+      width: 100%; font: inherit; text-align: left;
+    }
+
+    .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+    .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+    .nav-item svg { flex-shrink: 0; opacity: 0.85; }
+
+    .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    .plan-badge { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .plan-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+    .plan-badge strong { display: block; font-size: 13px; }
+    .plan-badge span { font-size: 11px; color: var(--text-muted); }
+
+    .main { display: flex; flex-direction: column; min-width: 0; }
+
+    .topbar {
+      height: var(--nav-h); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; background: rgba(10, 11, 15, 0.85); backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar h2 { font-size: 16px; font-weight: 600; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 16px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s ease; border: 1px solid transparent;
+    }
+
+    .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
+    .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .content { padding: 28px; flex: 1; max-width: 880px; }
+
+    .view { display: none; animation: fadeIn 0.25s ease; }
+    .view.active { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .hero { text-align: left; margin-bottom: 32px; }
+    .hero h1 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(26px, 4vw, 38px); font-weight: 400; line-height: 1.15; margin-bottom: 12px; max-width: 560px;
+    }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero p { color: var(--text-muted); font-size: 14px; max-width: 520px; line-height: 1.6; }
+
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 14px; }
+    .section-header h2 { font-size: 16px; font-weight: 600; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 20px; padding: 60px 40px; text-align: center;
+      background: var(--bg-card); transition: all 0.2s ease; cursor: pointer;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+    .upload-zone svg { margin-bottom: 16px; opacity: 0.6; }
+    .upload-zone h3 { font-size: 18px; margin-bottom: 8px; }
+    .upload-zone p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+
+    .upload-item {
+      display: flex; align-items: center; gap: 14px; padding: 16px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    }
+    .upload-item-icon { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; font-size: 18px; background: rgba(255,92,53,0.15); flex-shrink: 0; }
+    .upload-item-info { flex: 1; min-width: 0; }
+    .upload-item-info strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .upload-item-info span { font-size: 12px; color: var(--text-muted); }
+
+    /* Reel flow / cards */
+    .reel-flow-card, .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; }
+    .card { padding: 24px; }
+
+    .stage-list { display: flex; flex-direction: column; gap: 14px; }
+    .stage-item { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-dim); }
+    .stage-item.active { color: var(--text); }
+    .stage-item.done { color: var(--text-muted); }
+    .stage-dot {
+      width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0;
+      display: grid; place-items: center; font-size: 11px; font-weight: 700;
+    }
+    .stage-item.active .stage-dot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .stage-item.done .stage-dot { border-color: var(--success); background: var(--success); color: #04120b; }
+
+    .player { background: #000; border-radius: var(--radius); aspect-ratio: 16/9; position: relative; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+    .player-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a2e, #16213e); }
+    .player-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85)); }
+    .player-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .player-meta { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+    .key-moments { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .moment-pill { padding: 7px 14px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--text-muted); }
+    .moment-pill strong { color: var(--text); font-weight: 600; }
+
+    .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .feedback-card { background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .feedback-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+    .feedback-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feedback-card li { font-size: 13px; color: var(--text-muted); padding-left: 20px; position: relative; line-height: 1.4; }
+    .feedback-card.credit li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 700; }
+    .feedback-card.improve li::before { content: "→"; position: absolute; left: 0; color: var(--blue); font-weight: 700; }
+
+    .disclaimer { margin-top: 24px; font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+    /* My Reels grid */
+    .reels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .reel-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.2s ease; }
+    .reel-card:hover { border-color: rgba(255, 92, 53, 0.35); transform: translateY(-3px); box-shadow: var(--shadow); }
+    .reel-card-thumb { aspect-ratio: 16/10; background: linear-gradient(135deg, #1a1a2e, #16213e); }
+    .reel-card-info { padding: 14px; }
+    .reel-card-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .reel-card-info p { font-size: 12px; color: var(--text-muted); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state p { margin-top: 8px; font-size: 14px; }
+
+    /* Chat */
+    .chat-panel { display: flex; flex-direction: column; height: calc(100vh - var(--nav-h) - 56px); min-height: 420px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .message { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+    .message.them { background: var(--bg-hover); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .message.me { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-input { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+    .chat-input input { flex: 1; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; padding: 11px 18px; color: var(--text); font: inherit; font-size: 14px; outline: none; }
+    .chat-input input:focus { border-color: var(--accent); }
+
+    /* Forms */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 14px; color: var(--text); font: inherit; font-size: 14px; outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-top: 20px; }
+    .stat-tile { background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+    .stat-tile strong { display: block; font-size: 24px; color: var(--accent); }
+    .stat-tile span { font-size: 12px; color: var(--text-muted); }
+
+    /* Schedule */
+    .match-card { display: flex; gap: 16px; align-items: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; }
+    .match-date { width: 64px; flex-shrink: 0; text-align: center; background: var(--bg-hover); border-radius: var(--radius-sm); padding: 8px 4px; }
+    .match-date strong { display: block; font-size: 18px; }
+    .match-date span { font-size: 11px; color: var(--text-muted); }
+    .match-info { flex: 1; min-width: 0; }
+    .match-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .match-info span { font-size: 12px; color: var(--text-muted); }
+
+    /* Drill list */
+    .drill-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .drill-item { display: flex; gap: 12px; padding: 14px 16px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; }
+    .drill-item .num { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 20px; box-shadow: var(--shadow);
+      transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 100; font-size: 14px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; left: -280px; z-index: 50; transition: left 0.25s ease; width: 280px; }
+      .sidebar.open { left: 0; }
+      .feedback-grid { grid-template-columns: 1fr; }
+      .menu-toggle { display: flex !important; }
+    }
+    .menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+    .overlay.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <div class="logo-mark">CK</div>
+        <div>
+          <div class="logo-text">CLIPKICK</div>
+          <div class="logo-sub">AI Highlight Reels</div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav-section">Reels</div>
+        <button class="nav-item active" data-view="reel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Highlight Reel
+        </button>
+        <button class="nav-item" data-view="myreels">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          My Reels
+        </button>
+
+        <div class="nav-section">Coaching</div>
+        <button class="nav-item" data-view="chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Coach Chat
+        </button>
+        <button class="nav-item" data-view="tips">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Training Tips
+        </button>
+        <button class="nav-item" data-view="checkin">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Check-In
+        </button>
+
+        <div class="nav-section">Player</div>
+        <button class="nav-item" data-view="profile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </button>
+        <button class="nav-item" data-view="schedule">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Schedule
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="plan-badge">
+          <div class="dot"></div>
+          <div><strong id="profileNameBadge">Player</strong><span id="profilePositionBadge">Add your profile →</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h2 id="topbarTitle">Highlight Reel</h2>
+        <div></div>
+      </header>
+
+      <div class="content">
+        <!-- HIGHLIGHT REEL -->
+        <section class="view active" id="view-reel">
+          <div class="hero" id="heroSection">
+            <h1>Turn your game footage into a <em>highlight reel</em> that gets you noticed.</h1>
+            <p>Upload a full match or training video. ClipKick's AI finds your best goals, assists, dribbles, tackles, and saves — then builds a timestamped highlight clip list, plus feedback on what you did well and what to work on.</p>
+          </div>
+          <div id="reelFlowRoot"></div>
+        </section>
+
+        <!-- MY REELS -->
+        <section class="view" id="view-myreels">
+          <div class="section-header"><h2>My Reels</h2></div>
+          <div id="myReelsRoot"></div>
+        </section>
+
+        <!-- COACH CHAT -->
+        <section class="view" id="view-chat">
+          <div class="chat-panel">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+              <input type="text" placeholder="Ask your coach anything…" id="chatInput" />
+              <button class="btn btn-primary" onclick="sendCoachMessage()">Send</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TRAINING TIPS -->
+        <section class="view" id="view-tips">
+          <div class="section-header"><h2>Training Tips</h2></div>
+          <div class="card">
+            <div class="field">
+              <label>What do you want to work on?</label>
+              <input type="text" id="tipsFocusInput" placeholder="e.g. finishing, first touch, stamina" />
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="getTrainingTips()">Get Tips</button>
+              <button class="btn btn-ghost" id="tipsFromReelBtn" onclick="getTipsFromLatestReel()">Use my latest reel's feedback</button>
+            </div>
+            <div id="drillListRoot"></div>
+          </div>
+        </section>
+
+        <!-- CHECK-IN -->
+        <section class="view" id="view-checkin">
+          <div class="section-header"><h2>Monthly Check-In</h2></div>
+          <div class="card">
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:16px;">Get a reflection on your progress this session, based on the reels you've generated.</p>
+            <button class="btn btn-primary" onclick="getMonthlyCheckin()">Get my check-in</button>
+            <div id="checkinRoot"></div>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="view" id="view-profile">
+          <div class="section-header"><h2>Player Profile</h2></div>
+          <div class="card">
+            <div class="field">
+              <label>Name</label>
+              <input type="text" id="profileName" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label>Position</label>
+              <select id="profilePosition">
+                <option>Forward</option>
+                <option>Midfielder</option>
+                <option>Defender</option>
+                <option>Goalkeeper</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Team</label>
+              <input type="text" id="profileTeam" placeholder="Your team" />
+            </div>
+            <div class="stats-grid" id="statsGrid"></div>
+          </div>
+        </section>
+
+        <!-- SCHEDULE -->
+        <section class="view" id="view-schedule">
+          <div class="section-header"><h2>Match Schedule</h2></div>
+          <div id="scheduleRoot"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const profile = { name: "", position: "Forward", team: "" };
+    const reelHistory = [];
+    let selectedReelId = null;
+
+    const coachMessages = [
+      { from: "them", text: "Hey! I'm your ClipKick Coach 👋 Ask me anything about training, tactics, recovery, or how to make the most of your highlight reels." },
+    ];
+
+    const upcomingMatches = [
+      { opponent: "Lakeside United", date: "Aug 2", weekday: "SUN", time: "10:00 AM", location: "Riverside Park Field 3", rsvped: false },
+      { opponent: "Central Valley SC", date: "Aug 9", weekday: "SUN", time: "2:00 PM", location: "Away — Central Valley Complex", rsvped: false },
+      { opponent: "Harbor City FC", date: "Aug 16", weekday: "SUN", time: "11:30 AM", location: "Riverside Park Field 1", rsvped: false },
+    ];
+
+    const REEL_STAGES = ["Uploading footage", "Analyzing footage", "Identifying best moments", "Assembling your highlight reel"];
+
+    let reelFlowState = "idle"; // idle | ready | processing | result
+    let reelFlowFile = null;
+    let generatedReel = null;
+    let reelStageTimer = null;
+    let currentStage = 0;
+
+    function formatFileSize(bytes) {
+      if (bytes > 1e9) return (bytes / 1e9).toFixed(1) + " GB";
+      if (bytes > 1e6) return (bytes / 1e6).toFixed(0) + " MB";
+      return (bytes / 1e3).toFixed(0) + " KB";
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    /* ---------- Navigation ---------- */
+    const VIEW_TITLES = {
+      reel: "Highlight Reel", myreels: "My Reels", chat: "Coach Chat",
+      tips: "Training Tips", checkin: "Monthly Check-In", profile: "Player Profile", schedule: "Match Schedule",
+    };
+
+    function navigate(view) {
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
+      document.getElementById("topbarTitle").textContent = VIEW_TITLES[view] || "";
+      closeSidebar();
+    }
+
+    /* ---------- Highlight Reel flow ---------- */
+    function renderReelFlow() {
+      const root = document.getElementById("reelFlowRoot");
+      if (!root) return;
+      document.getElementById("heroSection").style.display = reelFlowState === "idle" ? "block" : "none";
+
+      if (reelFlowState === "idle") {
+        root.innerHTML = `
+          <div class="upload-zone" id="reelUploadZone">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <h3>Drop your game video here or click to upload</h3>
+            <p>Full match or training footage — ClipKick's AI finds your best moments</p>
+            <button class="btn btn-primary" type="button">Choose video</button>
+            <input type="file" accept="video/*" id="reelFileInput" style="display:none" />
+          </div>`;
+        wireReelUploadZone();
+      } else if (reelFlowState === "ready") {
+        root.innerHTML = `
+          <div class="upload-item">
+            <div class="upload-item-icon">🎬</div>
+            <div class="upload-item-info"><strong>${reelFlowFile.name}</strong><span>${reelFlowFile.size}</span></div>
+            <button class="btn btn-primary" onclick="startReelProcessing()">Generate Highlight Reel</button>
+          </div>`;
+      } else if (reelFlowState === "processing") {
+        renderReelProcessing(currentStage);
+      } else if (reelFlowState === "result") {
+        root.innerHTML = `<div class="reel-flow-card">${reelDetailHtml(generatedReel)}
+          <div style="margin-top:20px;"><button class="btn btn-ghost" onclick="resetReelFlow()">Analyze another video</button></div></div>`;
+      }
+    }
+
+    function wireReelUploadZone() {
+      const zone = document.getElementById("reelUploadZone");
+      const input = document.getElementById("reelFileInput");
+      zone.addEventListener("click", () => input.click());
+      input.addEventListener("change", () => { if (input.files[0]) handleReelFile(input.files[0]); });
+      ["dragenter", "dragover"].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add("dragover"); }));
+      zone.addEventListener("dragleave", ev => { ev.preventDefault(); zone.classList.remove("dragover"); });
+      zone.addEventListener("drop", ev => {
+        ev.preventDefault();
+        zone.classList.remove("dragover");
+        if (ev.dataTransfer.files[0]) handleReelFile(ev.dataTransfer.files[0]);
+      });
+    }
+
+    function handleReelFile(file) {
+      reelFlowFile = { name: file.name, size: formatFileSize(file.size), file };
+      reelFlowState = "ready";
+      renderReelFlow();
+    }
+
+    async function startReelProcessing() {
+      reelFlowState = "processing";
+      currentStage = 0;
+      renderReelFlow();
+      clearTimeout(reelStageTimer);
+
+      function tick() {
+        if (currentStage < REEL_STAGES.length - 1) {
+          currentStage++;
+          renderReelProcessing(currentStage);
+          reelStageTimer = setTimeout(tick, 1400);
+        }
+      }
+      reelStageTimer = setTimeout(tick, 1400);
+
+      const form = new FormData();
+      form.append("video", reelFlowFile.file);
+
+      try {
+        const res = await fetch("/api/highlight-reel", { method: "POST", body: form });
+        if (!res.ok) throw new Error(`highlight-reel ${res.status}`);
+        const data = await res.json();
+        generatedReel = {
+          id: Date.now(),
+          title: data.title || "Highlight Reel",
+          duration: data.duration || "--:--",
+          moments: Array.isArray(data.moments) ? data.moments : [],
+          credits: Array.isArray(data.credits) ? data.credits : [],
+          improve: Array.isArray(data.improve) ? data.improve : [],
+          createdAt: new Date().toLocaleString(),
+        };
+        reelHistory.unshift(generatedReel);
+        clearTimeout(reelStageTimer);
+        reelFlowState = "result";
+        renderReelFlow();
+      } catch (err) {
+        clearTimeout(reelStageTimer);
+        showToast("Gemini couldn't process this video — try again");
+        reelFlowState = "ready";
+        renderReelFlow();
+      }
+    }
+
+    function renderReelProcessing(stage) {
+      const root = document.getElementById("reelFlowRoot");
+      if (!root) return;
+      const stagesHtml = REEL_STAGES.map((label, i) => {
+        const cls = i < stage ? "done" : i === stage ? "active" : "";
+        const dot = i < stage ? "✓" : "";
+        return `<div class="stage-item ${cls}"><div class="stage-dot">${dot}</div>${label}</div>`;
+      }).join("");
+      root.innerHTML = `
+        <div class="reel-flow-card">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Processing ${reelFlowFile.name}</div>
+          <div class="stage-list">${stagesHtml}</div>
+        </div>`;
+    }
+
+    function reelDetailHtml(r) {
+      const momentsHtml = r.moments.map(m => `<div class="moment-pill"><strong>${m.time}</strong> · ${m.label}</div>`).join("")
+        || '<span style="color:var(--text-dim);font-size:13px;">No standout moments detected.</span>';
+      const creditsHtml = r.credits.map(c => `<li>${c}</li>`).join("") || "<li>—</li>";
+      const improveHtml = r.improve.map(c => `<li>${c}</li>`).join("") || "<li>—</li>";
+      return `
+        <div class="player">
+          <div class="player-bg"></div>
+          <div class="player-content">
+            <div class="player-title">${r.title}</div>
+            <div class="player-meta">Highlight Reel · ${r.duration}</div>
+          </div>
+        </div>
+        <div class="section-header"><h2>Key moments (timestamp list)</h2></div>
+        <div class="key-moments">${momentsHtml}</div>
+        <div class="feedback-grid">
+          <div class="feedback-card credit"><h4>What you did well</h4><ul>${creditsHtml}</ul></div>
+          <div class="feedback-card improve"><h4>Keep working on</h4><ul>${improveHtml}</ul></div>
+        </div>
+        <div class="disclaimer">This shows the AI's analysis and a timestamp list of your best moments. It doesn't export a trimmed video file — use the timestamps above to clip your own footage.</div>
+        <div style="margin-top:16px;"><button class="btn btn-ghost" onclick="shareReel(${r.id})">Copy summary to share with a coach</button></div>`;
+    }
+
+    function shareReel(id) {
+      const r = reelHistory.find(x => x.id === id) || generatedReel;
+      if (!r) return;
+      const lines = [
+        `${r.title} (${r.duration})`,
+        "",
+        "Key moments:",
+        ...r.moments.map(m => `  ${m.time} — ${m.label}`),
+        "",
+        "What I did well:",
+        ...r.credits.map(c => `  • ${c}`),
+        "",
+        "Working on:",
+        ...r.improve.map(c => `  • ${c}`),
+      ];
+      const text = lines.join("\n");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          () => showToast("Copied — ready to paste into an email or message to your coach"),
+          () => showToast("Couldn't copy automatically — select and copy the summary manually")
+        );
+      } else {
+        showToast("Clipboard access isn't available in this browser");
+      }
+    }
+
+    function resetReelFlow() {
+      reelFlowState = "idle";
+      reelFlowFile = null;
+      generatedReel = null;
+      clearTimeout(reelStageTimer);
+      renderReelFlow();
+    }
+
+    /* ---------- My Reels ---------- */
+    function renderMyReels() {
+      const root = document.getElementById("myReelsRoot");
+      if (selectedReelId) {
+        const r = reelHistory.find(x => x.id === selectedReelId);
+        root.innerHTML = `
+          <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="selectedReelId=null; renderMyReels();">← Back to My Reels</button>
+          <div class="reel-flow-card">${reelDetailHtml(r)}</div>`;
+        return;
+      }
+      if (!reelHistory.length) {
+        root.innerHTML = `<div class="empty-state">
+          <div style="font-size:32px;">🎬</div>
+          <p>No reels yet — generate one from Highlight Reel and it'll show up here.</p>
+        </div>`;
+        return;
+      }
+      root.innerHTML = `<div class="reels-grid">${reelHistory.map(r => `
+        <div class="reel-card" onclick="selectedReelId=${r.id}; renderMyReels();">
+          <div class="reel-card-thumb"></div>
+          <div class="reel-card-info">
+            <h3>${r.title}</h3>
+            <p>${r.duration} · ${r.moments.length} moments · ${r.createdAt}</p>
+          </div>
+        </div>`).join("")}</div>`;
+    }
+
+    /* ---------- Coach Chat ---------- */
+    function renderChat() {
+      document.getElementById("chatMessages").innerHTML = coachMessages.map(m => `<div class="message ${m.from}">${m.text}</div>`).join("");
+      const box = document.getElementById("chatMessages");
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function askCoach(userText) {
+      const history = coachMessages.slice(-8).filter(m => m.text !== "…");
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText, history }),
+      });
+      if (!res.ok) throw new Error(`chat ${res.status}`);
+      const data = await res.json();
+      if (!data.reply) throw new Error("No response from Coach");
+      return data.reply;
+    }
+
+    async function sendCoachMessage() {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      coachMessages.push({ from: "me", text });
+      input.value = "";
+      renderChat();
+
+      const pending = { from: "them", text: "…" };
+      coachMessages.push(pending);
+      renderChat();
+
+      try {
+        pending.text = await askCoach(text);
+      } catch (err) {
+        pending.text = "Couldn't reach your Coach just now — try again in a bit.";
+        showToast("Gemini request failed");
+      }
+      renderChat();
+    }
+
+    /* ---------- Training Tips ---------- */
+    async function requestTips(focus) {
+      const root = document.getElementById("drillListRoot");
+      root.innerHTML = `<div class="disclaimer" style="margin-top:16px;">Getting drills…</div>`;
+      try {
+        const res = await fetch("/api/training-tips", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ focus }),
+        });
+        if (!res.ok) throw new Error(`training-tips ${res.status}`);
+        const data = await res.json();
+        const drills = Array.isArray(data.drills) ? data.drills : [];
+        root.innerHTML = `<div class="drill-list">${drills.map((d, i) => `
+          <div class="drill-item"><span class="num">${i + 1}.</span><span>${d}</span></div>`).join("") || "<p style='color:var(--text-muted);font-size:14px;'>No drills came back — try a different focus.</p>"}</div>`;
+      } catch (err) {
+        root.innerHTML = "";
+        showToast("Gemini couldn't generate tips right now");
+      }
+    }
+
+    function getTrainingTips() {
+      const focus = document.getElementById("tipsFocusInput").value.trim();
+      if (!focus) { showToast("Type something to work on first"); return; }
+      requestTips(focus);
+    }
+
+    function getTipsFromLatestReel() {
+      if (!reelHistory.length) { showToast("Generate a highlight reel first"); return; }
+      const latest = reelHistory[0];
+      const focus = latest.improve.join(", ") || "general soccer fundamentals";
+      requestTips(focus);
+    }
+
+    /* ---------- Monthly Check-In ---------- */
+    async function getMonthlyCheckin() {
+      const root = document.getElementById("checkinRoot");
+      root.innerHTML = `<div class="disclaimer" style="margin-top:16px;">Putting together your check-in…</div>`;
+      const credits = reelHistory.flatMap(r => r.credits);
+      const improve = reelHistory.flatMap(r => r.improve);
+      try {
+        const res = await fetch("/api/monthly-checkin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reelCount: reelHistory.length, credits, improve }),
+        });
+        if (!res.ok) throw new Error(`monthly-checkin ${res.status}`);
+        const data = await res.json();
+        const goalsHtml = (data.goals || []).map(g => `<li>${g}</li>`).join("");
+        root.innerHTML = `
+          <div class="card" style="margin-top:16px; padding:18px;">
+            <p style="font-size:14px; line-height:1.6;">${data.message || ""}</p>
+            ${goalsHtml ? `<div class="feedback-card improve" style="margin-top:16px;"><h4>Goals for next month</h4><ul>${goalsHtml}</ul></div>` : ""}
+          </div>`;
+      } catch (err) {
+        root.innerHTML = "";
+        showToast("Gemini couldn't generate a check-in right now");
+      }
+    }
+
+    /* ---------- Profile ---------- */
+    function renderProfile() {
+      document.getElementById("profileName").value = profile.name;
+      document.getElementById("profilePosition").value = profile.position;
+      document.getElementById("profileTeam").value = profile.team;
+      renderProfileBadge();
+      renderStats();
+    }
+
+    function renderProfileBadge() {
+      document.getElementById("profileNameBadge").textContent = profile.name || "Player";
+      document.getElementById("profilePositionBadge").textContent = profile.name ? `${profile.position} · ${profile.team || "No team set"}` : "Add your profile →";
+    }
+
+    function renderStats() {
+      const totalReels = reelHistory.length;
+      const totalMoments = reelHistory.reduce((n, r) => n + r.moments.length, 0);
+      const totalCredits = reelHistory.reduce((n, r) => n + r.credits.length, 0);
+      const totalImprove = reelHistory.reduce((n, r) => n + r.improve.length, 0);
+      document.getElementById("statsGrid").innerHTML = `
+        <div class="stat-tile"><strong>${totalReels}</strong><span>Reels generated</span></div>
+        <div class="stat-tile"><strong>${totalMoments}</strong><span>Moments captured</span></div>
+        <div class="stat-tile"><strong>${totalCredits}</strong><span>Things done well</span></div>
+        <div class="stat-tile"><strong>${totalImprove}</strong><span>Growth areas flagged</span></div>`;
+    }
+
+    function wireProfileInputs() {
+      document.getElementById("profileName").addEventListener("input", e => { profile.name = e.target.value; renderProfileBadge(); });
+      document.getElementById("profilePosition").addEventListener("change", e => { profile.position = e.target.value; renderProfileBadge(); });
+      document.getElementById("profileTeam").addEventListener("input", e => { profile.team = e.target.value; renderProfileBadge(); });
+    }
+
+    /* ---------- Schedule ---------- */
+    function renderSchedule() {
+      document.getElementById("scheduleRoot").innerHTML = upcomingMatches.map((m, i) => `
+        <div class="match-card">
+          <div class="match-date"><strong>${m.date.split(" ")[1]}</strong><span>${m.date.split(" ")[0]}</span></div>
+          <div class="match-info"><h4>vs ${m.opponent}</h4><span>${m.time} · ${m.location}</span></div>
+          <button class="btn ${m.rsvped ? "btn-primary" : "btn-ghost"}" onclick="toggleRsvp(${i})">${m.rsvped ? "Attending" : "RSVP"}</button>
+        </div>`).join("");
+    }
+
+    function toggleRsvp(i) {
+      upcomingMatches[i].rsvped = !upcomingMatches[i].rsvped;
+      renderSchedule();
+      showToast(upcomingMatches[i].rsvped ? "You're marked as attending" : "RSVP removed");
+    }
+
+    /* ---------- Wiring ---------- */
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => navigate(btn.dataset.view));
+    });
+
+    document.getElementById("chatInput").addEventListener("keydown", e => { if (e.key === "Enter") sendCoachMessage(); });
+
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    document.getElementById("menuToggle").addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+      overlay.classList.toggle("show");
+    });
+    function closeSidebar() { sidebar.classList.remove("open"); overlay.classList.remove("show"); }
+    overlay.addEventListener("click", closeSidebar);
+
+    function init() {
+      renderReelFlow();
+      renderMyReels();
+      renderChat();
+      renderProfile();
+      renderSchedule();
+      wireProfileInputs();
+    }
+
+    init();
+  </script>
+</body>
+</html>

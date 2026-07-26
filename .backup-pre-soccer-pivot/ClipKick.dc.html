@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClipKick — Personal Media Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0b0f;
+      --bg-elevated: #12141a;
+      --bg-card: #181b24;
+      --bg-hover: #1f2330;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f4f4f6;
+      --text-muted: #8b90a0;
+      --text-dim: #5c6170;
+      --accent: #ff5c35;
+      --accent-soft: rgba(255, 92, 53, 0.15);
+      --accent-glow: rgba(255, 92, 53, 0.35);
+      --success: #3dd68c;
+      --blue: #5b8def;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      --sidebar-w: 240px;
+      --nav-h: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 28px;
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #ff8a65);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .nav-section {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 16px 12px 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      font: inherit;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+    .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+    .nav-item svg { flex-shrink: 0; opacity: 0.85; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .plan-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .plan-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .plan-badge strong { display: block; font-size: 13px; }
+    .plan-badge span { font-size: 11px; color: var(--text-muted); }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; min-width: 0; }
+
+    .topbar {
+      height: var(--nav-h);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(10, 11, 15, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 16px;
+      width: min(360px, 100%);
+      color: var(--text-muted);
+    }
+
+    .search input {
+      border: none;
+      background: none;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+    }
+
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5b8def, #9b6dff);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .content { padding: 28px; flex: 1; }
+
+    .view { display: none; animation: fadeIn 0.25s ease; }
+    .view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hero / Home */
+    .hero {
+      background: linear-gradient(135deg, rgba(255, 92, 53, 0.12) 0%, rgba(91, 141, 239, 0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -40%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 400;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      max-width: 520px;
+    }
+
+    .hero h1 em { font-style: italic; color: var(--accent); }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 460px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .section-header h2 { font-size: 18px; font-weight: 600; }
+    .section-header a {
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Lineups grid */
+    .lineups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .lineup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lineup-card:hover {
+      border-color: rgba(255, 92, 53, 0.35);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    .lineup-thumb {
+      aspect-ratio: 16/10;
+      background: var(--bg-hover);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lineup-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .lineup-thumb .stack {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+
+    .lineup-thumb .stack span {
+      background: linear-gradient(135deg, var(--bg-hover), var(--bg-card));
+    }
+
+    .lineup-count {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .lineup-info { padding: 14px; }
+    .lineup-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .lineup-info p { font-size: 12px; color: var(--text-muted); }
+
+    .lineup-card.new {
+      border-style: dashed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      color: var(--text-muted);
+      gap: 8px;
+    }
+
+    .lineup-card.new:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Feature pills */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .feature-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .feature-pill h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .feature-pill p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Upload view */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 20px;
+      padding: 60px 40px;
+      text-align: center;
+      background: var(--bg-card);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .upload-zone svg { margin-bottom: 16px; opacity: 0.6; }
+    .upload-zone h3 { font-size: 18px; margin-bottom: 8px; }
+    .upload-zone p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+
+    .file-types {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .file-type {
+      padding: 6px 12px;
+      background: var(--bg-hover);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .recent-uploads { margin-top: 32px; }
+
+    .upload-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .upload-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .upload-item-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+    }
+
+    .upload-item-info { flex: 1; min-width: 0; }
+    .upload-item-info strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .upload-item-info span { font-size: 12px; color: var(--text-muted); }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--bg-hover);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar fill {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Watch view */
+    .player-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+    }
+
+    .player {
+      background: #000;
+      border-radius: var(--radius);
+      aspect-ratio: 16/9;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .player-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85));
+    }
+
+    .player-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+    }
+
+    .player-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .player-meta { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 16px; }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .play-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .timeline {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .timeline-fill {
+      height: 100%;
+      width: 35%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .queue { display: flex; flex-direction: column; gap: 8px; }
+
+    .queue-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .queue-item:hover, .queue-item.active { background: var(--bg-card); }
+    .queue-item.active { border-left: 3px solid var(--accent); }
+
+    .queue-thumb {
+      width: 72px;
+      height: 48px;
+      border-radius: 6px;
+      background: var(--bg-hover);
+      flex-shrink: 0;
+    }
+
+    .queue-info h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .queue-info span { font-size: 11px; color: var(--text-muted); }
+
+    /* Connect view */
+    .connections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .connection-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .connection-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .connection-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .connection-header h3 { font-size: 15px; font-weight: 600; }
+    .connection-header span { font-size: 12px; color: var(--text-muted); }
+
+    .connection-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .connection-stats strong { color: var(--text); }
+
+    .connection-actions { display: flex; gap: 8px; margin-top: auto; }
+
+    .connection-actions .btn { flex: 1; justify-content: center; font-size: 12px; padding: 8px 12px; }
+
+    /* Chat view */
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: calc(100vh - var(--nav-h) - 56px);
+      min-height: 480px;
+    }
+
+    .chat-list {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
+
+    .chat-list-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .chat-list-item:hover, .chat-list-item.active { background: var(--bg-hover); }
+
+    .chat-list-item .avatar-sm {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .chat-list-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .chat-list-item p { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .chat-list-item time { font-size: 10px; color: var(--text-dim); margin-left: auto; flex-shrink: 0; }
+
+    .chat-panel { display: flex; flex-direction: column; }
+
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.them {
+      background: var(--bg-hover);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.me {
+      background: var(--accent);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-media {
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-input {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 11px 18px;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .chat-input input:focus { border-color: var(--accent); }
+
+    /* Links view */
+    .link-card {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .link-card:hover { border-color: rgba(255, 92, 53, 0.3); background: var(--bg-hover); }
+
+    .link-favicon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: var(--bg-hover);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .link-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .link-info p { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .link-info span { font-size: 11px; color: var(--text-dim); }
+
+    /* Highlight Reel flow */
+    .reel-flow-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 640px;
+    }
+
+    .stage-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 8px; }
+
+    .stage-item { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-dim); }
+    .stage-item.active { color: var(--text); }
+    .stage-item.done { color: var(--text-muted); }
+
+    .stage-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stage-item.active .stage-dot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .stage-item.done .stage-dot { border-color: var(--success); background: var(--success); color: #04120b; }
+
+    .moments-feed { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+    .moment-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-hover);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .moment-chip time { color: var(--accent); font-size: 12px; font-weight: 600; min-width: 40px; }
+
+    .key-moments { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+
+    .moment-pill {
+      padding: 7px 14px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .moment-pill strong { color: var(--text); font-weight: 600; }
+
+    .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .feedback-card { background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .feedback-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+    .feedback-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feedback-card li { font-size: 13px; color: var(--text-muted); padding-left: 20px; position: relative; line-height: 1.4; }
+    .feedback-card.credit li::before { content: "✓"; position: absolute; left: 0; color: var(--success); font-weight: 700; }
+    .feedback-card.improve li::before { content: "→"; position: absolute; left: 0; color: var(--blue); font-weight: 700; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 100;
+      font-size: 14px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Mobile */
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        z-index: 50;
+        transition: left 0.25s ease;
+        width: 280px;
+      }
+      .sidebar.open { left: 0; }
+      .player-layout, .chat-layout { grid-template-columns: 1fr; }
+      .chat-list { display: none; }
+      .feedback-grid { grid-template-columns: 1fr; }
+      .menu-toggle { display: flex !important; }
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 40;
+    }
+
+    .overlay.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <div class="logo-mark">CK</div>
+        <div>
+          <div class="logo-text">CLIPKICK</div>
+          <div class="logo-sub">Personal Media Cloud</div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav-section">Library</div>
+        <button class="nav-item active" data-view="home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <button class="nav-item" data-view="lineups">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Lineups
+        </button>
+        <button class="nav-item" data-view="links">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Saved Links
+        </button>
+
+        <div class="nav-section">Actions</div>
+        <button class="nav-item" data-view="upload">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <button class="nav-item" data-view="reel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Highlight Reel
+        </button>
+        <button class="nav-item" data-view="watch">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Watch
+        </button>
+
+        <div class="nav-section">Social</div>
+        <button class="nav-item" data-view="connect">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Connections
+        </button>
+        <button class="nav-item" data-view="chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chat
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="plan-badge">
+          <div class="dot"></div>
+          <div>
+            <strong>Free Plan</strong>
+            <span>2 GB · 30 links · 5 connections</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Search lineups, files, links…" id="searchInput" />
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showToast('Invite link copied')">Invite</button>
+          <button class="btn btn-primary" onclick="navigate('upload')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload
+          </button>
+          <div class="avatar" title="Your profile">JR</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- HOME -->
+        <section class="view active" id="view-home">
+          <div class="hero">
+            <h1>Your media. <em>Your vision.</em> No social noise.</h1>
+            <p>Store, organize, and share video, sound, images, and documents in private lineups — only with the people you choose.</p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" onclick="navigate('upload')">Upload media</button>
+              <button class="btn btn-ghost" onclick="navigate('lineups')">Browse lineups</button>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h2>Recent lineups</h2>
+            <a href="#" onclick="navigate('lineups'); return false;">View all</a>
+          </div>
+          <div class="lineups-grid" id="homeLineups"></div>
+
+          <div class="section-header">
+            <h2>Why ClipKick</h2>
+          </div>
+          <div class="features">
+            <div class="feature-pill">
+              <div class="feature-icon" style="background: rgba(255,92,53,0.15); color: var(--accent);">📁</div>
+              <div>
+                <h4>Lineups, not folders</h4>
+                <p>Organize media into curated playlists that feel personal, not bureaucratic.</p>
+              </div>
+            </div>
+            <div class="feature-pill">
+              <div class="feature-icon" style="background: rgba(91,141,239,0.15); color: var(--blue);">🔒</div>
+              <div>
+                <h4>You own it</h4>
+                <p>No discover feeds. Your content is encrypted and only visible to your connections.</p>
+              </div>
+            </div>
+            <div class="feature-pill">
+              <div class="feature-icon" style="background: rgba(61,214,140,0.15); color: var(--success);">📺</div>
+              <div>
+                <h4>Watch anywhere</h4>
+                <p>Stream on desktop, mobile, or mirror to your TV — without downloading.</p>
+              </div>
+            </div>
+            <div class="feature-pill">
+              <div class="feature-icon" style="background: rgba(155,109,255,0.15); color: #9b6dff;">💬</div>
+              <div>
+                <h4>Chat around media</h4>
+                <p>Start secure conversations tied to the clips and lineups you share.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- LINEUPS -->
+        <section class="view" id="view-lineups">
+          <div class="section-header">
+            <h2>Your lineups</h2>
+            <button class="btn btn-primary" onclick="createLineupWithAI()">+ New lineup</button>
+          </div>
+          <div class="lineups-grid" id="allLineups"></div>
+        </section>
+
+        <!-- LINKS -->
+        <section class="view" id="view-links">
+          <div class="section-header">
+            <h2>Saved links</h2>
+            <button class="btn btn-ghost" onclick="saveLinkWithAI()">+ Save link</button>
+          </div>
+          <div id="linksList"></div>
+        </section>
+
+        <!-- UPLOAD -->
+        <section class="view" id="view-upload">
+          <div class="upload-zone" id="uploadZone">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <h3>Drop files here or click to upload</h3>
+            <p>Video, audio, images, documents — over 100 file types supported</p>
+            <button class="btn btn-primary" type="button">Choose files</button>
+            <input type="file" id="uploadFileInput" multiple style="display:none" />
+            <div class="file-types">
+              <span class="file-type">MP4</span>
+              <span class="file-type">MOV</span>
+              <span class="file-type">MP3</span>
+              <span class="file-type">WAV</span>
+              <span class="file-type">JPG</span>
+              <span class="file-type">PNG</span>
+              <span class="file-type">PDF</span>
+              <span class="file-type">DOCX</span>
+            </div>
+          </div>
+          <div class="recent-uploads">
+            <div class="section-header"><h2>Recent uploads</h2></div>
+            <div class="upload-list" id="uploadList"></div>
+          </div>
+        </section>
+
+        <!-- HIGHLIGHT REEL -->
+        <section class="view" id="view-reel">
+          <div class="section-header"><h2>AI Highlight Reel</h2></div>
+          <div id="reelFlowRoot"></div>
+        </section>
+
+        <!-- WATCH -->
+        <section class="view" id="view-watch">
+          <div class="player-layout">
+            <div>
+              <div class="player" id="player">
+                <div class="player-bg" style="background: linear-gradient(135deg, #1a1a2e, #16213e);"></div>
+                <div class="player-content">
+                  <div class="player-title" id="nowPlaying">Family Trip — Yosemite 2025</div>
+                  <div class="player-meta">Video · 4:32 · Uploaded 2 days ago</div>
+                  <div class="player-controls">
+                    <button class="play-btn" id="playBtn" aria-label="Play">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <div class="timeline" id="timeline"><div class="timeline-fill" id="timelineFill"></div></div>
+                    <span style="font-size:12px;color:rgba(255,255,255,0.6);">1:36 / 4:32</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="section-header"><h2>Up next</h2></div>
+              <div class="queue" id="queue"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONNECT -->
+        <section class="view" id="view-connect">
+          <div class="section-header">
+            <h2>Your connections</h2>
+            <button class="btn btn-primary" onclick="showToast('Invite sent')">+ Invite</button>
+          </div>
+          <div class="connections-grid" id="connectionsGrid"></div>
+        </section>
+
+        <!-- CHAT -->
+        <section class="view" id="view-chat">
+          <div class="chat-layout">
+            <div class="chat-list" id="chatList"></div>
+            <div class="chat-panel">
+              <div class="chat-header">
+                <div class="avatar-sm" style="background: linear-gradient(135deg,#ff5c35,#ff8a65);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;">AI</div>
+                <div>
+                  <strong style="font-size:14px;">ClipKick AI</strong>
+                  <div style="font-size:12px;color:var(--text-muted);">Powered by Gemini</div>
+                </div>
+              </div>
+              <div class="chat-messages" id="chatMessages"></div>
+              <div class="chat-input">
+                <input type="text" placeholder="Message or attach media…" id="chatInput" />
+                <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const lineups = [
+      { id: 1, name: "Family Trips", count: 24, desc: "Vacation videos & photos", colors: ["#ff5c35", "#ff8a65", "#5b8def", "#9b6dff"] },
+      { id: 2, name: "Cooking Recipes", count: 18, desc: "Saved from around the web", colors: ["#3dd68c", "#ff5c35", "#ffd166", "#5b8def"] },
+      { id: 3, name: "Kids Sports", count: 12, desc: "Soccer & swim meets", colors: ["#5b8def", "#3dd68c", "#ff5c35", "#9b6dff"] },
+      { id: 4, name: "Music Mix", count: 31, desc: "Personal soundtracks", colors: ["#9b6dff", "#ff5c35", "#5b8def", "#3dd68c"] },
+      { id: 5, name: "Work Presentations", count: 8, desc: "Private docs & decks", colors: ["#5b8def", "#1a1a2e", "#16213e", "#0f3460"] },
+    ];
+
+    const uploads = [
+      { name: "yosemite_sunset.mp4", type: "video", size: "128 MB", progress: 100 },
+      { name: "pasta_carbonara_recipe.mp4", type: "video", size: "45 MB", progress: 100 },
+      { name: "birthday_mix.mp3", type: "audio", size: "8.2 MB", progress: 100 },
+      { name: "scan_documents.pdf", type: "doc", size: "2.1 MB", progress: 67 },
+    ];
+
+    const links = [
+      { title: "Perfect Carbonara — YouTube", url: "youtube.com/watch?v=...", favicon: "▶️", lineup: "Cooking Recipes" },
+      { title: "Yosemite National Park Guide", url: "nps.gov/yose...", favicon: "🏔️", lineup: "Family Trips" },
+      { title: "Homemade Sourdough Starter", url: "seriouseats.com/...", favicon: "🍞", lineup: "Cooking Recipes" },
+      { title: "Kids Soccer Drills", url: "ussoccer.com/...", favicon: "⚽", lineup: "Kids Sports" },
+    ];
+
+    const queue = [
+      { title: "Family Trip — Yosemite 2025", duration: "4:32", active: true },
+      { title: "Beach Day Highlights", duration: "2:18" },
+      { title: "Birthday Party Mix", duration: "6:05" },
+      { title: "Holiday Dinner 2024", duration: "3:44" },
+    ];
+
+    const connections = [
+      { name: "Sarah Chen", initials: "SC", color: "#5b8def", shared: 12, role: "Family" },
+      { name: "Mike Chen", initials: "MC", color: "#9b6dff", shared: 12, role: "Family" },
+      { name: "Alex Rivera", initials: "AR", color: "#3dd68c", shared: 5, role: "Friend" },
+      { name: "Studio VIP", initials: "SV", color: "#ff5c35", shared: 3, role: "VIP" },
+    ];
+
+    const chats = [
+      { name: "ClipKick AI", initials: "AI", color: "#ff5c35", preview: "Ask me anything about your media", time: "now" },
+      { name: "Sarah & Mike", initials: "SM", color: "#5b8def", preview: "Love the Yosemite clip!", time: "2m" },
+      { name: "Alex Rivera", initials: "AR", color: "#3dd68c", preview: "Added that recipe to cooking lineup", time: "1h" },
+      { name: "Studio VIP", initials: "SV", color: "#ff5c35", preview: "New reel is ready for review", time: "3h" },
+    ];
+
+    const messages = [
+      { from: "them", text: "Hey, I'm ClipKick AI 👋 Ask me anything about organizing your lineups, uploads, or saved links." },
+    ];
+
+    const CLIPKICK_API = "/api";
+
+    async function askClipKickAI(userText) {
+      const history = messages.slice(-8).filter(m => m.text !== "…");
+      const res = await fetch(`${CLIPKICK_API}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText, history }),
+      });
+      if (!res.ok) throw new Error(`ClipKick AI backend error ${res.status}`);
+      const data = await res.json();
+      if (!data.reply) throw new Error("No response from ClipKick AI");
+      return data.reply;
+    }
+
+    const REEL_STAGES = ["Uploading footage", "Analyzing footage", "Identifying best moments", "Assembling your highlight reel"];
+
+    let reelFlowState = "idle"; // idle | ready | processing | result
+    let reelFlowFile = null;
+    let generatedReel = null;
+    let reelProcessingTimer = null;
+
+    const typeIcons = { video: "🎬", audio: "🎵", doc: "📄" };
+    const typeColors = { video: "rgba(255,92,53,0.15)", audio: "rgba(155,109,255,0.15)", doc: "rgba(91,141,239,0.15)" };
+
+    function renderLineupCard(l) {
+      const stack = l.colors.map(c => `<span style="background:${c}"></span>`).join("");
+      return `
+        <div class="lineup-card" onclick="showToast('Opened ${l.name}')">
+          <div class="lineup-thumb"><div class="stack">${stack}</div><span class="lineup-count">${l.count} items</span></div>
+          <div class="lineup-info"><h3>${l.name}</h3><p>${l.desc}</p></div>
+        </div>`;
+    }
+
+    function renderNewLineupCard() {
+      return `<div class="lineup-card new" onclick="createLineupWithAI()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>New lineup</span>
+      </div>`;
+    }
+
+    const LINEUP_PALETTES = [
+      ["#ff5c35", "#ff8a65", "#5b8def", "#9b6dff"],
+      ["#3dd68c", "#ff5c35", "#ffd166", "#5b8def"],
+      ["#5b8def", "#3dd68c", "#ff5c35", "#9b6dff"],
+      ["#9b6dff", "#ff5c35", "#5b8def", "#3dd68c"],
+    ];
+
+    function renderLineupGrids() {
+      document.getElementById("homeLineups").innerHTML = lineups.slice(0, 4).map(renderLineupCard).join("");
+      document.getElementById("allLineups").innerHTML = lineups.map(renderLineupCard).join("") + renderNewLineupCard();
+    }
+
+    async function createLineupWithAI() {
+      const hint = window.prompt('What\'s this lineup about? (e.g. "summer beach trips")');
+      if (!hint) return;
+      showToast("Asking Gemini for a lineup name…");
+      try {
+        const res = await fetch(`${CLIPKICK_API}/name-lineup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hint }),
+        });
+        if (!res.ok) throw new Error(`name-lineup ${res.status}`);
+        const data = await res.json();
+        const lineup = {
+          id: lineups.length ? Math.max(...lineups.map(l => l.id)) + 1 : 1,
+          name: data.name || hint,
+          count: 0,
+          desc: data.description || hint,
+          colors: LINEUP_PALETTES[lineups.length % LINEUP_PALETTES.length],
+        };
+        lineups.push(lineup);
+        renderLineupGrids();
+        showToast(`Created lineup "${lineup.name}"`);
+      } catch (err) {
+        showToast("Gemini couldn't name that lineup");
+      }
+    }
+
+    async function saveLinkWithAI() {
+      const url = window.prompt("Paste a URL to save");
+      if (!url) return;
+      showToast("Asking Gemini to summarize that link…");
+      try {
+        const res = await fetch(`${CLIPKICK_API}/summarize-link`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        if (!res.ok) throw new Error(`summarize-link ${res.status}`);
+        const data = await res.json();
+        const link = {
+          title: data.title || url,
+          url,
+          favicon: "🔗",
+          lineup: "Unsorted",
+          summary: data.summary || "",
+        };
+        links.unshift(link);
+        renderLinksList();
+        showToast(`Saved "${link.title}"`);
+      } catch (err) {
+        showToast("Gemini couldn't summarize that link");
+      }
+    }
+
+    function init() {
+      renderLineupGrids();
+
+      renderUploadList();
+      renderLinksList();
+
+      document.getElementById("queue").innerHTML = queue.map(q => `
+        <div class="queue-item${q.active ? " active" : ""}" onclick="playTrack('${q.title}')">
+          <div class="queue-thumb"></div>
+          <div class="queue-info"><h4>${q.title}</h4><span>${q.duration}</span></div>
+        </div>`).join("");
+
+      document.getElementById("connectionsGrid").innerHTML = connections.map(c => `
+        <div class="connection-card">
+          <div class="connection-header">
+            <div class="connection-avatar" style="background:${c.color}22;color:${c.color}">${c.initials}</div>
+            <div><h3>${c.name}</h3><span>${c.role}</span></div>
+          </div>
+          <div class="connection-stats"><span><strong>${c.shared}</strong> shared lineups</span></div>
+          <div class="connection-actions">
+            <button class="btn btn-ghost" onclick="showToast('Shared a lineup')">Share</button>
+            <button class="btn btn-primary" onclick="navigate('chat')">Message</button>
+          </div>
+        </div>`).join("");
+
+      document.getElementById("chatList").innerHTML = chats.map((c, i) => `
+        <div class="chat-list-item${i === 0 ? " active" : ""}">
+          <div class="avatar-sm" style="background:${c.color}22;color:${c.color}">${c.initials}</div>
+          <div><h4>${c.name}</h4><p>${c.preview}</p></div>
+          <time>${c.time}</time>
+        </div>`).join("");
+
+      renderMessages();
+      renderReelFlow();
+    }
+
+    function renderMessages() {
+      document.getElementById("chatMessages").innerHTML = messages.map(m => `
+        <div class="message ${m.from}">
+          ${m.text}
+          ${m.media ? `<div class="message-media">${m.media}</div>` : ""}
+        </div>`).join("");
+    }
+
+    function prettifyFileName(name) {
+      return name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes > 1e9) return (bytes / 1e9).toFixed(1) + " GB";
+      if (bytes > 1e6) return (bytes / 1e6).toFixed(0) + " MB";
+      return (bytes / 1e3).toFixed(0) + " KB";
+    }
+
+    function mediaTypeFromMime(mime) {
+      if (mime.startsWith("video/")) return "video";
+      if (mime.startsWith("audio/")) return "audio";
+      return "doc";
+    }
+
+    function renderUploadList() {
+      document.getElementById("uploadList").innerHTML = uploads.map(u => `
+        <div class="upload-item">
+          <div class="upload-item-icon" style="background:${typeColors[u.type]}">${typeIcons[u.type]}</div>
+          <div class="upload-item-info">
+            <strong>${u.name}</strong>
+            <span>${u.size}${u.progress < 100 ? " · Analyzing with Gemini…" : ""}</span>
+            ${u.description ? `<span style="display:block;margin-top:2px;">${u.description}${u.tags && u.tags.length ? " · " + u.tags.join(", ") : ""}</span>` : ""}
+            ${u.progress < 100 ? `<div class="progress-bar"><fill style="width:${u.progress}%"></fill></div>` : ""}
+          </div>
+        </div>`).join("");
+    }
+
+    function renderLinksList() {
+      document.getElementById("linksList").innerHTML = links.map(l => `
+        <div class="link-card" onclick="showToast('Opened link')">
+          <div class="link-favicon">${l.favicon}</div>
+          <div class="link-info"><h4>${l.title}</h4><p>${l.summary || l.url}</p><span>In ${l.lineup}</span></div>
+        </div>`).join("");
+    }
+
+    async function describeClipWithAI(file, entry) {
+      const form = new FormData();
+      form.append("file", file);
+      try {
+        const res = await fetch(`${CLIPKICK_API}/describe-clip`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(`describe-clip ${res.status}`);
+        const data = await res.json();
+        entry.name = data.title || entry.name;
+        entry.description = data.description || "";
+        entry.tags = Array.isArray(data.tags) ? data.tags : [];
+      } catch (err) {
+        entry.description = "AI analysis unavailable for this file.";
+        showToast("Gemini couldn't analyze this file");
+      }
+      entry.progress = 100;
+      renderUploadList();
+    }
+
+    function handleUploadFiles(fileList) {
+      Array.from(fileList).forEach(file => {
+        const entry = {
+          name: prettifyFileName(file.name),
+          type: mediaTypeFromMime(file.type),
+          size: formatFileSize(file.size),
+          progress: 30,
+        };
+        uploads.unshift(entry);
+        renderUploadList();
+        describeClipWithAI(file, entry);
+      });
+    }
+
+    function renderReelFlow() {
+      const root = document.getElementById("reelFlowRoot");
+      if (!root) return;
+
+      if (reelFlowState === "idle") {
+        root.innerHTML = `
+          <div class="upload-zone" id="reelUploadZone">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <h3>Drop your game video here or click to upload</h3>
+            <p>ClipKick's AI turns your full match or training footage into a highlight reel of your best moments</p>
+            <button class="btn btn-primary" type="button">Choose video</button>
+            <input type="file" accept="video/*" id="reelFileInput" style="display:none" />
+          </div>`;
+        wireReelUploadZone();
+      } else if (reelFlowState === "ready") {
+        root.innerHTML = `
+          <div class="upload-item" style="max-width:640px;">
+            <div class="upload-item-icon" style="background:rgba(255,92,53,0.15)">🎬</div>
+            <div class="upload-item-info">
+              <strong>${reelFlowFile.name}</strong>
+              <span>${reelFlowFile.size}</span>
+            </div>
+            <button class="btn btn-primary" onclick="startReelProcessing()">Generate Highlight Reel</button>
+          </div>`;
+      } else if (reelFlowState === "processing") {
+        renderReelProcessing(0);
+      } else if (reelFlowState === "result") {
+        renderReelResult();
+      }
+    }
+
+    function wireReelUploadZone() {
+      const zone = document.getElementById("reelUploadZone");
+      const input = document.getElementById("reelFileInput");
+      zone.addEventListener("click", () => input.click());
+      input.addEventListener("change", () => {
+        if (input.files[0]) handleReelFile(input.files[0]);
+      });
+      ["dragenter", "dragover"].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add("dragover"); }));
+      zone.addEventListener("dragleave", ev => { ev.preventDefault(); zone.classList.remove("dragover"); });
+      zone.addEventListener("drop", ev => {
+        ev.preventDefault();
+        zone.classList.remove("dragover");
+        if (ev.dataTransfer.files[0]) handleReelFile(ev.dataTransfer.files[0]);
+      });
+    }
+
+    function handleReelFile(file) {
+      reelFlowFile = { name: file.name, size: formatFileSize(file.size), file };
+      reelFlowState = "ready";
+      renderReelFlow();
+    }
+
+    function startReelProcessing() {
+      reelFlowState = "processing";
+      renderReelFlow();
+      clearTimeout(reelProcessingTimer);
+
+      // Advance the visual stages up to the last one, then hold there (pulsing)
+      // until the real Gemini analysis actually finishes — real video processing
+      // time varies, so the animation shouldn't imply a fixed, faked duration.
+      let stage = 0;
+      const holdStage = REEL_STAGES.length - 1;
+      function tick() {
+        if (stage < holdStage) {
+          stage++;
+          renderReelProcessing(stage);
+          reelProcessingTimer = setTimeout(tick, 1200);
+        }
+      }
+      reelProcessingTimer = setTimeout(tick, 1200);
+
+      const form = new FormData();
+      form.append("video", reelFlowFile.file);
+
+      fetch(`${CLIPKICK_API}/highlight-reel`, { method: "POST", body: form })
+        .then(res => {
+          if (!res.ok) throw new Error(`highlight-reel ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          clearTimeout(reelProcessingTimer);
+          generatedReel = {
+            title: data.title || `${prettifyFileName(reelFlowFile.name)} — Highlight Reel`,
+            duration: data.duration || "—",
+            moments: Array.isArray(data.moments) ? data.moments : [],
+            credits: Array.isArray(data.credits) ? data.credits : [],
+            improve: Array.isArray(data.improve) ? data.improve : [],
+          };
+          reelFlowState = "result";
+          renderReelFlow();
+        })
+        .catch(err => {
+          clearTimeout(reelProcessingTimer);
+          showToast("Gemini couldn't analyze this video");
+          reelFlowState = "ready";
+          renderReelFlow();
+        });
+    }
+
+    function renderReelProcessing(stage) {
+      const root = document.getElementById("reelFlowRoot");
+      if (!root) return;
+      const stagesHtml = REEL_STAGES.map((label, i) => {
+        const cls = i < stage ? "done" : i === stage ? "active" : "";
+        const dot = i < stage ? "✓" : "";
+        return `<div class="stage-item ${cls}"><div class="stage-dot">${dot}</div>${label}</div>`;
+      }).join("");
+      root.innerHTML = `
+        <div class="reel-flow-card">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Processing ${reelFlowFile.name}</div>
+          <div class="stage-list">${stagesHtml}</div>
+        </div>`;
+    }
+
+    function renderReelResult() {
+      const root = document.getElementById("reelFlowRoot");
+      const r = generatedReel;
+      const momentsHtml = r.moments.map(m => `<div class="moment-pill"><strong>${m.time}</strong> · ${m.label}</div>`).join("");
+      const creditsHtml = r.credits.map(c => `<li>${c}</li>`).join("");
+      const improveHtml = r.improve.map(c => `<li>${c}</li>`).join("");
+      root.innerHTML = `
+        <div class="reel-flow-card" style="max-width:100%;">
+          <div class="player" style="margin-bottom:24px;">
+            <div class="player-bg" style="background: linear-gradient(135deg, #1a1a2e, #16213e);"></div>
+            <div class="player-content">
+              <div class="player-title">${r.title}</div>
+              <div class="player-meta">Highlight Reel · ${r.duration} · Generated just now</div>
+              <div class="player-controls">
+                <button class="play-btn" onclick="showToast('Playing ${r.title}')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+                <div class="timeline"><div class="timeline-fill" style="width:0%"></div></div>
+                <span style="font-size:12px;color:rgba(255,255,255,0.6);">0:00 / ${r.duration}</span>
+              </div>
+            </div>
+          </div>
+          <div class="section-header"><h2>Key moments</h2></div>
+          <div class="key-moments">${momentsHtml}</div>
+          <div class="feedback-grid">
+            <div class="feedback-card credit"><h4>What you did well</h4><ul>${creditsHtml}</ul></div>
+            <div class="feedback-card improve"><h4>Keep working on</h4><ul>${improveHtml}</ul></div>
+          </div>
+          <div class="hero-actions" style="margin-top:24px;">
+            <button class="btn btn-primary" onclick="showToast('Downloading highlight reel…')">Download reel</button>
+            <button class="btn btn-ghost" onclick="resetReelFlow()">Start over</button>
+          </div>
+        </div>`;
+    }
+
+    function resetReelFlow() {
+      reelFlowState = "idle";
+      reelFlowFile = null;
+      generatedReel = null;
+      renderReelFlow();
+    }
+
+    function navigate(view) {
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
+      closeSidebar();
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    function playTrack(title) {
+      document.getElementById("nowPlaying").textContent = title;
+      showToast(`Now playing: ${title}`);
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      messages.push({ from: "me", text });
+      input.value = "";
+      renderMessages();
+      document.getElementById("chatMessages").scrollTop = 9999;
+
+      const pending = { from: "them", text: "…" };
+      messages.push(pending);
+      renderMessages();
+      document.getElementById("chatMessages").scrollTop = 9999;
+
+      try {
+        pending.text = await askClipKickAI(text);
+      } catch (err) {
+        pending.text = "Couldn't reach ClipKick AI just now — try again in a bit.";
+        showToast("Gemini API call failed");
+      }
+      renderMessages();
+      document.getElementById("chatMessages").scrollTop = 9999;
+    }
+
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => navigate(btn.dataset.view));
+    });
+
+    document.getElementById("chatInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    let playing = false;
+    document.getElementById("playBtn").addEventListener("click", () => {
+      playing = !playing;
+      document.getElementById("playBtn").innerHTML = playing
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      showToast(playing ? "Playing" : "Paused");
+    });
+
+    const zone = document.getElementById("uploadZone");
+    const uploadFileInput = document.getElementById("uploadFileInput");
+    ["dragenter", "dragover"].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add("dragover"); }));
+    ["dragleave", "drop"].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.remove("dragover"); }));
+    zone.addEventListener("drop", ev => {
+      if (ev.dataTransfer.files.length) handleUploadFiles(ev.dataTransfer.files);
+    });
+    zone.addEventListener("click", () => uploadFileInput.click());
+    uploadFileInput.addEventListener("change", () => {
+      if (uploadFileInput.files.length) handleUploadFiles(uploadFileInput.files);
+      uploadFileInput.value = "";
+    });
+
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    document.getElementById("menuToggle").addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+      overlay.classList.toggle("show");
+    });
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("show");
+    }
+    overlay.addEventListener("click", closeSidebar);
+
+    init();
+  </script>
+</body>
+</html>
