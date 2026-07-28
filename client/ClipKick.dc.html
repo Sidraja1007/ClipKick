@@ -410,7 +410,7 @@
     // When the frontend is hosted separately from the backend (e.g. static site on
     // Vercel, API server on Render/Railway), set this to the backend's full URL.
     // Leave empty when frontend and backend are served from the same origin (local dev).
-    const API_BASE = "";
+    const API_BASE = "https://clipkick-api.onrender.com";
 
     const profile = { name: "", position: "Forward", team: "" };
     const reelHistory = [];
@@ -421,10 +421,11 @@
     ];
 
     const upcomingMatches = [
-      { opponent: "Lakeside United", date: "Aug 2", weekday: "SUN", time: "10:00 AM", location: "Riverside Park Field 3", rsvped: false },
-      { opponent: "Central Valley SC", date: "Aug 9", weekday: "SUN", time: "2:00 PM", location: "Away — Central Valley Complex", rsvped: false },
-      { opponent: "Harbor City FC", date: "Aug 16", weekday: "SUN", time: "11:30 AM", location: "Riverside Park Field 1", rsvped: false },
+      { opponent: "Lakeside United", isoDate: "2026-08-02", time: "10:00 AM", location: "Riverside Park Field 3", rsvped: false },
+      { opponent: "Central Valley SC", isoDate: "2026-08-09", time: "2:00 PM", location: "Away — Central Valley Complex", rsvped: false },
+      { opponent: "Harbor City FC", isoDate: "2026-08-16", time: "11:30 AM", location: "Riverside Park Field 1", rsvped: false },
     ];
+    let editingMatchIndex = null;
 
     const REEL_STAGES = ["Uploading footage", "Analyzing footage", "Identifying best moments", "Assembling your highlight reel"];
 
@@ -433,11 +434,20 @@
     let generatedReel = null;
     let reelStageTimer = null;
     let currentStage = 0;
+    let reelFlowError = null;
 
     function formatFileSize(bytes) {
       if (bytes > 1e9) return (bytes / 1e9).toFixed(1) + " GB";
       if (bytes > 1e6) return (bytes / 1e6).toFixed(0) + " MB";
       return (bytes / 1e3).toFixed(0) + " KB";
+    }
+
+    async function errorReasonFrom(res, fallback) {
+      try {
+        const body = await res.json();
+        if (body.error) return body.error;
+      } catch {}
+      return fallback;
     }
 
     function showToast(msg) {
@@ -477,11 +487,15 @@
           </div>`;
         wireReelUploadZone();
       } else if (reelFlowState === "ready") {
+        const errorHtml = reelFlowError
+          ? `<div style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--text);">⚠️ ${reelFlowError}</div>`
+          : "";
         root.innerHTML = `
+          ${errorHtml}
           <div class="upload-item">
             <div class="upload-item-icon">🎬</div>
             <div class="upload-item-info"><strong>${reelFlowFile.name}</strong><span>${reelFlowFile.size}</span></div>
-            <button class="btn btn-primary" onclick="startReelProcessing()">Generate Highlight Reel</button>
+            <button class="btn btn-primary" onclick="startReelProcessing()">${reelFlowError ? "Try again" : "Generate Highlight Reel"}</button>
           </div>`;
       } else if (reelFlowState === "processing") {
         renderReelProcessing(currentStage);
@@ -508,12 +522,14 @@
     function handleReelFile(file) {
       reelFlowFile = { name: file.name, size: formatFileSize(file.size), file };
       reelFlowState = "ready";
+      reelFlowError = null;
       renderReelFlow();
     }
 
     async function startReelProcessing() {
       reelFlowState = "processing";
       currentStage = 0;
+      reelFlowError = null;
       renderReelFlow();
       clearTimeout(reelStageTimer);
 
@@ -531,7 +547,14 @@
 
       try {
         const res = await fetch(`${API_BASE}/api/highlight-reel`, { method: "POST", body: form });
-        if (!res.ok) throw new Error(`highlight-reel ${res.status}`);
+        if (!res.ok) {
+          let reason = `Request failed (${res.status}).`;
+          try {
+            const errBody = await res.json();
+            if (errBody.error) reason = errBody.error;
+          } catch {}
+          throw new Error(reason);
+        }
         const data = await res.json();
         generatedReel = {
           id: Date.now(),
@@ -540,6 +563,7 @@
           moments: Array.isArray(data.moments) ? data.moments : [],
           credits: Array.isArray(data.credits) ? data.credits : [],
           improve: Array.isArray(data.improve) ? data.improve : [],
+          videoUrl: data.videoUrl ? `${API_BASE}${data.videoUrl}` : null,
           createdAt: new Date().toLocaleString(),
         };
         reelHistory.unshift(generatedReel);
@@ -548,6 +572,7 @@
         renderReelFlow();
       } catch (err) {
         clearTimeout(reelStageTimer);
+        reelFlowError = err.message || "Gemini couldn't analyze this video — try again.";
         showToast("Gemini couldn't process this video — try again");
         reelFlowState = "ready";
         renderReelFlow();
@@ -574,21 +599,25 @@
         || '<span style="color:var(--text-dim);font-size:13px;">No standout moments detected.</span>';
       const creditsHtml = r.credits.map(c => `<li>${c}</li>`).join("") || "<li>—</li>";
       const improveHtml = r.improve.map(c => `<li>${c}</li>`).join("") || "<li>—</li>";
+      const playerHtml = r.videoUrl
+        ? `<video class="player" controls style="width:100%;height:100%;object-fit:cover;" src="${r.videoUrl}"></video>
+           <div style="margin-bottom:8px;"><a class="btn btn-ghost" href="${r.videoUrl}" download>Download reel video</a></div>`
+        : `<div class="player">
+             <div class="player-bg"></div>
+             <div class="player-content">
+               <div class="player-title">${r.title}</div>
+               <div class="player-meta">Highlight Reel · ${r.duration}</div>
+             </div>
+           </div>`;
       return `
-        <div class="player">
-          <div class="player-bg"></div>
-          <div class="player-content">
-            <div class="player-title">${r.title}</div>
-            <div class="player-meta">Highlight Reel · ${r.duration}</div>
-          </div>
-        </div>
+        ${playerHtml}
         <div class="section-header"><h2>Key moments (timestamp list)</h2></div>
         <div class="key-moments">${momentsHtml}</div>
         <div class="feedback-grid">
           <div class="feedback-card credit"><h4>What you did well</h4><ul>${creditsHtml}</ul></div>
           <div class="feedback-card improve"><h4>Keep working on</h4><ul>${improveHtml}</ul></div>
         </div>
-        <div class="disclaimer">This shows the AI's analysis and a timestamp list of your best moments. It doesn't export a trimmed video file — use the timestamps above to clip your own footage.</div>
+        <div class="disclaimer">${r.videoUrl ? "This reel is auto-cut from your footage around each flagged moment — quick trims, not hand-edited, so double-check the pacing." : "This shows the AI's analysis and a timestamp list of your best moments. It doesn't export a trimmed video file — use the timestamps above to clip your own footage."}</div>
         <div style="margin-top:16px;"><button class="btn btn-ghost" onclick="shareReel(${r.id})">Copy summary to share with a coach</button></div>`;
     }
 
@@ -622,6 +651,7 @@
       reelFlowState = "idle";
       reelFlowFile = null;
       generatedReel = null;
+      reelFlowError = null;
       clearTimeout(reelStageTimer);
       renderReelFlow();
     }
@@ -667,7 +697,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, history }),
       });
-      if (!res.ok) throw new Error(`chat ${res.status}`);
+      if (!res.ok) throw new Error(await errorReasonFrom(res, "Coach couldn't reply — try again."));
       const data = await res.json();
       if (!data.reply) throw new Error("No response from Coach");
       return data.reply;
@@ -688,8 +718,8 @@
       try {
         pending.text = await askCoach(text);
       } catch (err) {
-        pending.text = "Couldn't reach your Coach just now — try again in a bit.";
-        showToast("Gemini request failed");
+        pending.text = err.message || "Couldn't reach your Coach just now — try again in a bit.";
+        showToast(pending.text);
       }
       renderChat();
     }
@@ -704,14 +734,14 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ focus }),
         });
-        if (!res.ok) throw new Error(`training-tips ${res.status}`);
+        if (!res.ok) throw new Error(await errorReasonFrom(res, "Gemini couldn't generate tips right now."));
         const data = await res.json();
         const drills = Array.isArray(data.drills) ? data.drills : [];
         root.innerHTML = `<div class="drill-list">${drills.map((d, i) => `
           <div class="drill-item"><span class="num">${i + 1}.</span><span>${d}</span></div>`).join("") || "<p style='color:var(--text-muted);font-size:14px;'>No drills came back — try a different focus.</p>"}</div>`;
       } catch (err) {
         root.innerHTML = "";
-        showToast("Gemini couldn't generate tips right now");
+        showToast(err.message || "Gemini couldn't generate tips right now");
       }
     }
 
@@ -740,7 +770,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reelCount: reelHistory.length, credits, improve }),
         });
-        if (!res.ok) throw new Error(`monthly-checkin ${res.status}`);
+        if (!res.ok) throw new Error(await errorReasonFrom(res, "Gemini couldn't generate a check-in right now."));
         const data = await res.json();
         const goalsHtml = (data.goals || []).map(g => `<li>${g}</li>`).join("");
         root.innerHTML = `
@@ -750,7 +780,7 @@
           </div>`;
       } catch (err) {
         root.innerHTML = "";
-        showToast("Gemini couldn't generate a check-in right now");
+        showToast(err.message || "Gemini couldn't generate a check-in right now");
       }
     }
 
@@ -788,18 +818,82 @@
 
     /* ---------- Schedule ---------- */
     function renderSchedule() {
-      document.getElementById("scheduleRoot").innerHTML = upcomingMatches.map((m, i) => `
+      document.getElementById("scheduleRoot").innerHTML = upcomingMatches.map((m, i) =>
+        editingMatchIndex === i ? matchEditFormHtml(m, i) : matchCardHtml(m, i)
+      ).join("");
+    }
+
+    function matchCardHtml(m, i) {
+      const d = new Date(`${m.isoDate}T00:00:00`);
+      const month = d.toLocaleDateString("en-US", { month: "short" });
+      const day = d.getDate();
+      return `
         <div class="match-card">
-          <div class="match-date"><strong>${m.date.split(" ")[1]}</strong><span>${m.date.split(" ")[0]}</span></div>
+          <div class="match-date"><strong>${day}</strong><span>${month}</span></div>
           <div class="match-info"><h4>vs ${m.opponent}</h4><span>${m.time} · ${m.location}</span></div>
-          <button class="btn ${m.rsvped ? "btn-primary" : "btn-ghost"}" onclick="toggleRsvp(${i})">${m.rsvped ? "Attending" : "RSVP"}</button>
-        </div>`).join("");
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn ${m.rsvped ? "btn-primary" : "btn-ghost"}" onclick="toggleRsvp(${i})">${m.rsvped ? "Attending" : "RSVP"}</button>
+            <button class="btn btn-ghost" onclick="prepareForGame(${i})">Prepare for the game →</button>
+          </div>
+          <button class="btn btn-ghost" style="padding:8px 10px;" onclick="editMatch(${i})" aria-label="Edit match">✏️</button>
+        </div>`;
+    }
+
+    function matchEditFormHtml(m, i) {
+      return `
+        <div class="match-card" style="align-items:flex-end;flex-wrap:wrap;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;flex:1;min-width:280px;">
+            <div class="field" style="margin-bottom:0;flex:1;min-width:140px;"><label>Opponent</label><input type="text" id="editOpponent${i}" value="${m.opponent}" /></div>
+            <div class="field" style="margin-bottom:0;"><label>Date</label><input type="date" id="editDate${i}" value="${m.isoDate}" /></div>
+            <div class="field" style="margin-bottom:0;"><label>Time</label><input type="text" id="editTime${i}" value="${m.time}" /></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:160px;"><label>Location</label><input type="text" id="editLocation${i}" value="${m.location}" /></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" onclick="saveMatch(${i})">Save</button>
+            <button class="btn btn-ghost" onclick="cancelEditMatch()">Cancel</button>
+          </div>
+        </div>`;
+    }
+
+    function editMatch(i) {
+      editingMatchIndex = i;
+      renderSchedule();
+    }
+
+    function cancelEditMatch() {
+      editingMatchIndex = null;
+      renderSchedule();
+    }
+
+    function saveMatch(i) {
+      const opponent = document.getElementById(`editOpponent${i}`).value.trim();
+      const isoDate = document.getElementById(`editDate${i}`).value;
+      const time = document.getElementById(`editTime${i}`).value.trim();
+      const location = document.getElementById(`editLocation${i}`).value.trim();
+      if (!opponent || !isoDate) { showToast("Opponent and date are required"); return; }
+      upcomingMatches[i] = { ...upcomingMatches[i], opponent, isoDate, time, location };
+      editingMatchIndex = null;
+      renderSchedule();
+      showToast("Match updated");
     }
 
     function toggleRsvp(i) {
       upcomingMatches[i].rsvped = !upcomingMatches[i].rsvped;
       renderSchedule();
       showToast(upcomingMatches[i].rsvped ? "You're marked as attending" : "RSVP removed");
+    }
+
+    function prepareForGame(i) {
+      const m = upcomingMatches[i];
+      const improveNotes = reelHistory.flatMap(r => r.improve);
+      const focus = improveNotes.slice(0, 3).join(", ");
+      const message = improveNotes.length
+        ? `I have a game coming up against ${m.opponent}. Based on what I've been working on (${focus}), what should I focus on this week to be ready?`
+        : `I have a game coming up against ${m.opponent}. What should I focus on this week to be ready?`;
+      navigate("chat");
+      const input = document.getElementById("chatInput");
+      input.value = message;
+      sendCoachMessage();
     }
 
     /* ---------- Wiring ---------- */
