@@ -130,9 +130,11 @@ function extractJson(text) {
   return JSON.parse(cleaned);
 }
 
-const HIGHLIGHT_REEL_PROMPT = `You are an expert soccer video analyst and highlight editor. The user has provided a full soccer match or training video of themselves playing. Analyze the video to identify the player's best moments, including goals, assists, successful dribbles, tackles, saves, key passes, and other standout plays.
+const HIGHLIGHT_REEL_PROMPT = `You are an expert soccer video analyst and highlight editor. The user claims to have provided a full soccer/football match or training video of themselves playing.
 
-Respond with ONLY minified JSON in the form {"title":"...","duration":"m:ss","moments":[{"time":"m:ss","label":"..."}],"credits":["...","..."],"improve":["...","..."]}:
+First, check whether the video actually shows soccer/football being played — players on a pitch, a soccer ball, soccer-specific actions (dribbling, passing, shooting, tackling, goalkeeping). If it does NOT — e.g. it's a different sport like basketball, unrelated footage, or just a person posing/talking with no soccer being played — respond with ONLY minified JSON in the form {"error":"not_soccer","message":"..."} where message is one short, specific sentence naming what the video actually shows instead. Do not analyze non-soccer footage as if it were soccer, and do not guess soccer content is present if you are not confident.
+
+If the video DOES show soccer, analyze it to identify the player's best moments, including goals, assists, successful dribbles, tackles, saves, key passes, and other standout plays, and respond with ONLY minified JSON in the form {"title":"...","duration":"m:ss","moments":[{"time":"m:ss","label":"..."}],"credits":["...","..."],"improve":["...","..."]}:
 - title: a short catchy highlight-reel title for this footage (max 8 words)
 - duration: your best estimate of the clip's total length, formatted m:ss
 - moments: the best moments selected for the reel in chronological order, each with an approximate timestamp (m:ss) and a short label (max 8 words) — this is the timestamp list of clips selected for the highlight reel
@@ -168,6 +170,12 @@ app.post("/api/highlight-reel", videoUpload.single("video"), async (req, res) =>
     });
 
     const parsed = extractJson(response.text);
+
+    if (parsed.error === "not_soccer") {
+      return res.status(422).json({
+        error: `Video failure — that doesn't look like soccer footage${parsed.message ? ` (${parsed.message})` : ""}. Try again with an actual soccer match or training video.`,
+      });
+    }
 
     let videoUrl = null;
     try {
@@ -214,11 +222,21 @@ app.post("/api/chat", async (req, res) => {
 
 const COACH_VOICE_SYSTEM_PROMPT = `You are ClipKick Coach, an AI voice assistant for a youth soccer highlight-reel app, talking live with a young soccer player who wants to improve and get noticed by coaches/scouts. This is a real-time spoken conversation, not a text chat — keep replies short and natural like something you'd actually say out loud (1-3 sentences), be warm and encouraging, and give real soccer knowledge (training, tactics, recovery, mindset), not generic filler.`;
 
+// Server-side allow-list so a client can only pick from these — never pass a
+// client-supplied string straight into the Gemini voice config.
+const VOICE_PERSONAS = {
+  david: { voiceName: "Charon", flavor: "Your personality: David — calm, analytical, informative. You break things down clearly and methodically." },
+  bob: { voiceName: "Fenrir", flavor: "Your personality: Bob — hype, excitable, high-energy. You're loud with encouragement and get the player fired up." },
+  alyssa: { voiceName: "Sulafat", flavor: "Your personality: Alyssa — warm, encouraging, gentle. You lead with empathy and positive reinforcement." },
+  emily: { voiceName: "Erinome", flavor: "Your personality: Emily — precise, clear, tactical. You focus on sharp, specific technical detail." },
+};
+const DEFAULT_VOICE_PERSONA = "alyssa";
+
 // Relays mic audio from the browser to Gemini's Live API and streams the spoken
 // reply back, so the API key never reaches the client (same rule as every other
 // Gemini call in this app) even though this one is a persistent two-way stream
 // instead of a single request/response.
-async function handleVoiceConnection(clientWs) {
+async function handleVoiceConnection(clientWs, req) {
   let liveSession = null;
   let closed = false;
   const pending = [];
@@ -227,12 +245,16 @@ async function handleVoiceConnection(clientWs) {
     if (clientWs.readyState === clientWs.OPEN) clientWs.send(JSON.stringify(obj));
   };
 
+  const requestedPersona = new URL(req.url, "http://localhost").searchParams.get("persona");
+  const persona = VOICE_PERSONAS[requestedPersona] || VOICE_PERSONAS[DEFAULT_VOICE_PERSONA];
+
   try {
     liveSession = await ai.live.connect({
       model: GEMINI_VOICE_MODEL,
       config: {
         responseModalities: [Modality.AUDIO],
-        systemInstruction: COACH_VOICE_SYSTEM_PROMPT,
+        systemInstruction: `${COACH_VOICE_SYSTEM_PROMPT}\n\n${persona.flavor}`,
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceName } } },
       },
       callbacks: {
         onopen: () => {},
