@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clipkick-your-highlight-reels-begin-here.netlify.app/sitemap.xml
