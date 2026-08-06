@@ -615,6 +615,32 @@
     ];
     let editingMatchIndex = null;
 
+    /* ---------- Local persistence (survives refresh, this browser only) ---------- */
+    const STORAGE_KEY = "clipkick-state-v1";
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, reelHistory, coachMessages, upcomingMatches }));
+      } catch {}
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved.profile) Object.assign(profile, saved.profile);
+        if (Array.isArray(saved.reelHistory)) { reelHistory.length = 0; reelHistory.push(...saved.reelHistory); }
+        if (Array.isArray(saved.coachMessages) && saved.coachMessages.length) {
+          coachMessages.length = 0;
+          coachMessages.push(...saved.coachMessages.map(m => ({ ...m, pending: false })));
+        }
+        if (Array.isArray(saved.upcomingMatches)) {
+          saved.upcomingMatches.forEach((m, i) => { if (upcomingMatches[i]) upcomingMatches[i].rsvped = !!m.rsvped; });
+        }
+      } catch {}
+    }
+
     const REEL_STAGES = ["Uploading footage", "Analyzing footage", "Identifying best moments", "Assembling your highlight reel"];
 
     let reelFlowState = "idle"; // idle | ready | processing | result
@@ -777,6 +803,7 @@
         renderReelFlow();
         renderMyReels();
         renderStats();
+        saveState();
         sfx.success();
         if (currentView !== "reel") {
           showToast("Your highlight reel is ready — come check it out.", () => navigate("reel"));
@@ -950,6 +977,7 @@
       }
       pending.pending = false;
       renderChat();
+      saveState();
     }
 
     /* ---------- Voice Coach (real-time Gemini Live audio, relayed through our backend) ---------- */
@@ -1190,9 +1218,9 @@
     }
 
     function wireProfileInputs() {
-      document.getElementById("profileName").addEventListener("input", e => { profile.name = e.target.value; renderProfileBadge(); });
-      document.getElementById("profilePosition").addEventListener("change", e => { profile.position = e.target.value; renderProfileBadge(); });
-      document.getElementById("profileTeam").addEventListener("input", e => { profile.team = e.target.value; renderProfileBadge(); });
+      document.getElementById("profileName").addEventListener("input", e => { profile.name = e.target.value; renderProfileBadge(); saveState(); });
+      document.getElementById("profilePosition").addEventListener("change", e => { profile.position = e.target.value; renderProfileBadge(); saveState(); });
+      document.getElementById("profileTeam").addEventListener("input", e => { profile.team = e.target.value; renderProfileBadge(); saveState(); });
     }
 
     /* ---------- Schedule ---------- */
@@ -1259,6 +1287,7 @@
     function toggleRsvp(i) {
       upcomingMatches[i].rsvped = !upcomingMatches[i].rsvped;
       renderSchedule();
+      saveState();
       showToast(upcomingMatches[i].rsvped ? "You're marked as attending" : "RSVP removed");
     }
 
@@ -1292,6 +1321,7 @@
     overlay.addEventListener("click", closeSidebar);
 
     function init() {
+      loadState();
       renderReelFlow();
       renderMyReels();
       renderChat();
