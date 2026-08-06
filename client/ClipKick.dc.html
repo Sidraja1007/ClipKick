@@ -48,7 +48,20 @@
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
+      position: relative;
     }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(600px circle at 15% 20%, rgba(255,92,53,0.05), transparent 60%),
+        radial-gradient(500px circle at 85% 75%, rgba(91,141,239,0.045), transparent 60%);
+      animation: ambientDrift 18s ease-in-out infinite alternate;
+    }
+    @keyframes ambientDrift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-2%, 2%) scale(1.06); }
+    }
+    .app { position: relative; z-index: 1; }
 
     .app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
 
@@ -169,8 +182,36 @@
       width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0;
       display: grid; place-items: center; font-size: 11px; font-weight: 700;
     }
-    .stage-item.active .stage-dot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .stage-item.active .stage-dot { border-color: var(--accent); animation: dotGlow 1.4s ease-in-out infinite; }
     .stage-item.done .stage-dot { border-color: var(--success); background: var(--success); color: #04120b; }
+    @keyframes dotGlow {
+      0%, 100% { box-shadow: 0 0 0 3px var(--accent-soft); }
+      50% { box-shadow: 0 0 0 6px var(--accent-soft), 0 0 18px var(--accent-glow); }
+    }
+
+    /* Futuristic processing screen */
+    .reel-flow-card.processing { position: relative; overflow: hidden; border-color: var(--accent-soft); }
+    .reel-flow-card.processing::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: linear-gradient(115deg, transparent 42%, rgba(255,92,53,0.09) 50%, transparent 58%);
+      background-size: 220% 220%; animation: sheenSweep 3s linear infinite;
+    }
+    .reel-flow-card.processing > * { position: relative; z-index: 1; }
+    @keyframes sheenSweep { 0% { background-position: 140% 0; } 100% { background-position: -40% 0; } }
+
+    .processing-orb-wrap { display: flex; justify-content: center; margin-bottom: 26px; }
+    .processing-orb-ring { position: relative; width: 120px; height: 120px; display: grid; place-items: center; }
+    .processing-orb-ring::before, .processing-orb-ring::after {
+      content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--accent);
+    }
+    .processing-orb-ring::before { animation: ringPulse 2.2s ease-out infinite; }
+    .processing-orb-ring::after { animation: ringPulse 2.2s ease-out infinite 1.1s; }
+    @keyframes ringPulse {
+      0% { transform: scale(0.68); opacity: 0.65; }
+      100% { transform: scale(1.55); opacity: 0; }
+    }
+    .processing-orb-canvas { position: relative; z-index: 1; border-radius: 50%; filter: drop-shadow(0 0 22px var(--accent-glow)); }
+    .processing-pct { text-align: center; font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; margin-top: 16px; font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
     .player { background: #000; border-radius: var(--radius); aspect-ratio: 16/9; position: relative; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
     .player-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a2e, #16213e); }
@@ -212,6 +253,40 @@
     .chat-input { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
     .chat-input input { flex: 1; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; padding: 11px 18px; color: var(--text); font: inherit; font-size: 14px; outline: none; }
     .chat-input input:focus { border-color: var(--accent); }
+
+    .typing-dots { display: inline-flex; gap: 4px; align-items: center; padding: 3px 0; }
+    .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); animation: dotBounce 1.1s ease-in-out infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes dotBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+    /* Sound toggle */
+    .sound-toggle {
+      width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-muted); display: grid; place-items: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0;
+    }
+    .sound-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+    /* Voice coach */
+    .voice-toggle {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-hover);
+      color: var(--text-muted); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s ease;
+    }
+    .voice-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .voice-toggle.live { background: var(--accent); color: #fff; border-color: var(--accent); animation: voicePulse 1.6s ease-in-out infinite; }
+    @keyframes voicePulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-soft); }
+      50% { box-shadow: 0 0 0 8px transparent; }
+    }
+    .voice-toggle.connecting { animation: voiceSpin 0.9s linear infinite; }
+    @keyframes voiceSpin { to { transform: rotate(360deg); } }
+
+    .voice-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 44px 20px; text-align: center; }
+    .voice-orb-wrap { position: relative; width: 160px; height: 160px; display: grid; place-items: center; }
+    .voice-orb-canvas { border-radius: 50%; filter: drop-shadow(0 0 30px var(--accent-glow)); }
+    .voice-status { font-size: 13px; color: var(--text-muted); }
+    .voice-status strong { color: var(--text); }
+    .voice-end-btn { margin-top: 4px; }
 
     /* Forms */
     .field { margin-bottom: 16px; }
@@ -325,7 +400,9 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <h2 id="topbarTitle">Highlight Reel</h2>
-        <div></div>
+        <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" aria-label="Toggle sound effects" title="Toggle sound effects">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="4 8 9 8 13 4 13 20 9 16 4 16 4 8"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M20 5a9 9 0 0 1 0 14"/></svg>
+        </button>
       </header>
 
       <div class="content">
@@ -346,12 +423,22 @@
 
         <!-- COACH CHAT -->
         <section class="view" id="view-chat">
-          <div class="chat-panel">
+          <div class="chat-panel" id="chatTextPanel">
             <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input">
               <input type="text" placeholder="Ask your coach anything…" id="chatInput" />
+              <button class="voice-toggle" id="voiceToggleBtn" onclick="startVoiceChat()" aria-label="Talk to Coach" title="Talk to Coach">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
               <button class="btn btn-primary" onclick="sendCoachMessage()">Send</button>
             </div>
+          </div>
+          <div class="chat-panel voice-panel" id="voicePanel" style="display:none;">
+            <div class="voice-orb-wrap">
+              <canvas class="voice-orb-canvas" id="voiceOrbCanvas"></canvas>
+            </div>
+            <div class="voice-status" id="voiceStatus">Connecting…</div>
+            <button class="btn btn-ghost voice-end-btn" onclick="endVoiceChat()">End &amp; go back to typing</button>
           </div>
         </section>
 
@@ -423,6 +510,96 @@
     // Leave empty when frontend and backend are served from the same origin (local dev).
     const API_BASE = "https://clipkick-api-production.up.railway.app";
 
+    /* ---------- Sound effects (synthesized, no audio files) ---------- */
+    let soundEnabled = true;
+    let sfxCtx = null;
+    function getSfxCtx() {
+      if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (sfxCtx.state === "suspended") sfxCtx.resume();
+      return sfxCtx;
+    }
+    function tone(freq, startAt, duration, { type = "sine", gain = 0.05, glideTo = null } = {}) {
+      if (!soundEnabled) return;
+      const ctx = getSfxCtx();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt);
+      if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, ctx.currentTime + startAt + duration);
+      g.gain.setValueAtTime(0, ctx.currentTime + startAt);
+      g.gain.linearRampToValueAtTime(gain, ctx.currentTime + startAt + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + startAt + duration);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(ctx.currentTime + startAt);
+      osc.stop(ctx.currentTime + startAt + duration + 0.02);
+    }
+    const sfx = {
+      click: () => tone(720, 0, 0.05, { type: "square", gain: 0.025 }),
+      send: () => tone(500, 0, 0.09, { type: "sine", gain: 0.04, glideTo: 780 }),
+      notify: () => tone(660, 0, 0.12, { type: "sine", gain: 0.045, glideTo: 880 }),
+      success: () => { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.09, 0.22, { type: "sine", gain: 0.05 })); },
+      error: () => tone(160, 0, 0.22, { type: "sawtooth", gain: 0.04, glideTo: 90 }),
+    };
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById("soundToggle");
+      if (btn) btn.innerHTML = soundEnabled ? SOUND_ON_ICON : SOUND_OFF_ICON;
+      if (soundEnabled) sfx.click();
+    }
+    const SOUND_ON_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="4 8 9 8 13 4 13 20 9 16 4 16 4 8"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M20 5a9 9 0 0 1 0 14"/></svg>';
+    const SOUND_OFF_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="4 8 9 8 13 4 13 20 9 16 4 16 4 8"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>';
+
+    /* ---------- Animated orb (canvas, used by processing screen + voice panel) ---------- */
+    function startOrb(canvas, { size = 120, energy = () => 0.3 } = {}) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = size + "px";
+      canvas.style.height = size + "px";
+      const ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
+      let raf;
+      const start = performance.now();
+      function frame(now) {
+        const t = (now - start) / 1000;
+        const e = Math.max(0, Math.min(1, energy()));
+        ctx.clearRect(0, 0, size, size);
+        const cx = size / 2, cy = size / 2;
+        const baseR = size * 0.28 * (1 + e * 0.25);
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+        grad.addColorStop(0, `rgba(255,140,100,${0.9})`);
+        grad.addColorStop(0.5, `rgba(255,92,53,${0.55 + e * 0.3})`);
+        grad.addColorStop(1, "rgba(255,92,53,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fff2ec";
+        ctx.beginPath();
+        ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
+        ctx.fill();
+
+        const bars = 28;
+        for (let i = 0; i < bars; i++) {
+          const angle = (i / bars) * Math.PI * 2 + t * 0.4;
+          const wob = Math.sin(t * 3 + i * 0.7) * 0.5 + 0.5;
+          const len = (6 + wob * 14) * (0.4 + e);
+          const r1 = baseR + 6;
+          const r2 = r1 + len;
+          ctx.strokeStyle = `rgba(255,92,53,${0.25 + wob * 0.35})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+          ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+          ctx.stroke();
+        }
+        raf = requestAnimationFrame(frame);
+      }
+      raf = requestAnimationFrame(frame);
+      return () => cancelAnimationFrame(raf);
+    }
+
     const profile = { name: "", position: "Forward", team: "" };
     const reelHistory = [];
     let selectedReelId = null;
@@ -481,6 +658,8 @@
     };
 
     function navigate(view) {
+      if (view !== currentView) sfx.click();
+      if (currentView === "chat" && view !== "chat" && voiceActive) endVoiceChat();
       currentView = view;
       document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
       document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
@@ -491,9 +670,15 @@
     }
 
     /* ---------- Highlight Reel flow ---------- */
+    let reelOrbStop = null;
+    function stopReelOrb() {
+      if (reelOrbStop) { reelOrbStop(); reelOrbStop = null; }
+    }
+
     function renderReelFlow() {
       const root = document.getElementById("reelFlowRoot");
       if (!root) return;
+      if (reelFlowState !== "processing") stopReelOrb();
       document.getElementById("heroSection").style.display = reelFlowState === "idle" ? "block" : "none";
 
       if (reelFlowState === "idle") {
@@ -592,6 +777,7 @@
         renderReelFlow();
         renderMyReels();
         renderStats();
+        sfx.success();
         if (currentView !== "reel") {
           showToast("Your highlight reel is ready — come check it out.", () => navigate("reel"));
         }
@@ -599,6 +785,7 @@
         clearTimeout(reelStageTimer);
         reelFlowError = err.message || "Gemini couldn't analyze this video — try again.";
         showToast("Gemini couldn't process this video — try again");
+        sfx.error();
         reelFlowState = "ready";
         renderReelFlow();
       }
@@ -612,11 +799,21 @@
         const dot = i < stage ? "✓" : "";
         return `<div class="stage-item ${cls}"><div class="stage-dot">${dot}</div>${label}</div>`;
       }).join("");
+      const pct = Math.round(((stage + 0.5) / REEL_STAGES.length) * 100);
+      stopReelOrb();
       root.innerHTML = `
-        <div class="reel-flow-card">
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Processing ${reelFlowFile.name}</div>
+        <div class="reel-flow-card processing">
+          <div class="processing-orb-wrap">
+            <div class="processing-orb-ring">
+              <canvas class="processing-orb-canvas" id="reelOrbCanvas"></canvas>
+            </div>
+          </div>
+          <div class="processing-pct">${pct}%</div>
+          <div style="font-size:13px;color:var(--text-muted);margin:20px 0;text-align:center;">Processing ${reelFlowFile.name}</div>
           <div class="stage-list">${stagesHtml}</div>
         </div>`;
+      const canvas = document.getElementById("reelOrbCanvas");
+      if (canvas) reelOrbStop = startOrb(canvas, { size: 120, energy: () => 0.35 + Math.sin(performance.now() / 400) * 0.15 });
     }
 
     function reelDetailHtml(r) {
@@ -710,13 +907,15 @@
 
     /* ---------- Coach Chat ---------- */
     function renderChat() {
-      document.getElementById("chatMessages").innerHTML = coachMessages.map(m => `<div class="message ${m.from}">${m.text}</div>`).join("");
+      document.getElementById("chatMessages").innerHTML = coachMessages.map(m =>
+        `<div class="message ${m.from}">${m.pending ? '<span class="typing-dots"><span></span><span></span><span></span></span>' : m.text}</div>`
+      ).join("");
       const box = document.getElementById("chatMessages");
       box.scrollTop = box.scrollHeight;
     }
 
     async function askCoach(userText) {
-      const history = coachMessages.slice(-8).filter(m => m.text !== "…");
+      const history = coachMessages.slice(-8).filter(m => !m.pending);
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -734,19 +933,174 @@
       if (!text) return;
       coachMessages.push({ from: "me", text });
       input.value = "";
+      sfx.send();
       renderChat();
 
-      const pending = { from: "them", text: "…" };
+      const pending = { from: "them", text: "", pending: true };
       coachMessages.push(pending);
       renderChat();
 
       try {
         pending.text = await askCoach(text);
+        sfx.notify();
       } catch (err) {
         pending.text = err.message || "Couldn't reach your Coach just now — try again in a bit.";
         showToast(pending.text);
+        sfx.error();
       }
+      pending.pending = false;
       renderChat();
+    }
+
+    /* ---------- Voice Coach (real-time Gemini Live audio, relayed through our backend) ---------- */
+    let voiceActive = false;
+    let voiceWs = null;
+    let voiceInputCtx = null;
+    let voiceOutputCtx = null;
+    let voiceStream = null;
+    let voiceProcessor = null;
+    let voiceOrbStop = null;
+    let voiceInputLevel = 0;
+    let voiceOutputLevel = 0;
+    let voiceIsSpeaking = false;
+    let voiceNextPlayTime = 0;
+    let voiceActiveSources = [];
+
+    function setVoiceStatus(html) {
+      const el = document.getElementById("voiceStatus");
+      if (el) el.innerHTML = html;
+    }
+
+    function base64ToInt16(b64) {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Int16Array(bytes.buffer);
+    }
+
+    function int16ToBase64(int16) {
+      const bytes = new Uint8Array(int16.buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    async function startVoiceChat() {
+      voiceActive = true;
+      document.getElementById("chatTextPanel").style.display = "none";
+      document.getElementById("voicePanel").style.display = "flex";
+      setVoiceStatus("Connecting…");
+
+      const canvas = document.getElementById("voiceOrbCanvas");
+      voiceOrbStop = startOrb(canvas, { size: 160, energy: () => (voiceIsSpeaking ? voiceOutputLevel : voiceInputLevel) });
+
+      try {
+        voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+      } catch (err) {
+        showToast("Microphone access is needed for the voice coach");
+        endVoiceChat();
+        return;
+      }
+
+      const wsProtocol = (API_BASE.startsWith("https") || (!API_BASE && location.protocol === "https:")) ? "wss" : "ws";
+      const wsHost = API_BASE ? API_BASE.replace(/^https?:\/\//, "") : location.host;
+      voiceWs = new WebSocket(`${wsProtocol}://${wsHost}/voice`);
+
+      voiceWs.onopen = () => {
+        voiceInputCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const source = voiceInputCtx.createMediaStreamSource(voiceStream);
+        voiceProcessor = voiceInputCtx.createScriptProcessor(4096, 1, 1);
+        source.connect(voiceProcessor);
+        voiceProcessor.connect(voiceInputCtx.destination);
+        voiceProcessor.onaudioprocess = e => {
+          const input = e.inputBuffer.getChannelData(0);
+          const int16 = new Int16Array(input.length);
+          let sum = 0;
+          for (let i = 0; i < input.length; i++) {
+            const s = Math.max(-1, Math.min(1, input[i]));
+            int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            sum += s * s;
+          }
+          voiceInputLevel = Math.sqrt(sum / input.length) * 4;
+          if (voiceWs && voiceWs.readyState === WebSocket.OPEN) {
+            voiceWs.send(JSON.stringify({ type: "audio", data: int16ToBase64(int16), mimeType: "audio/pcm;rate=16000" }));
+          }
+        };
+      };
+
+      voiceWs.onmessage = evt => {
+        let msg;
+        try { msg = JSON.parse(evt.data); } catch { return; }
+        if (msg.type === "ready") {
+          setVoiceStatus("<strong>Listening…</strong> talk whenever you're ready");
+        } else if (msg.type === "audio") {
+          playVoiceChunk(msg.data);
+        } else if (msg.type === "interrupted") {
+          stopVoicePlayback();
+        } else if (msg.type === "turnComplete") {
+          voiceIsSpeaking = false;
+          setVoiceStatus("<strong>Listening…</strong> talk whenever you're ready");
+        } else if (msg.type === "error") {
+          showToast(msg.error || "Voice coach hit an error");
+          endVoiceChat();
+        } else if (msg.type === "closed") {
+          endVoiceChat();
+        }
+      };
+
+      voiceWs.onerror = () => showToast("Voice connection error");
+      voiceWs.onclose = () => { if (voiceActive) endVoiceChat(); };
+    }
+
+    function playVoiceChunk(base64Data) {
+      if (!voiceOutputCtx) {
+        voiceOutputCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        voiceNextPlayTime = voiceOutputCtx.currentTime;
+      }
+      voiceIsSpeaking = true;
+      setVoiceStatus("<strong>Coach is speaking…</strong>");
+      const int16 = base64ToInt16(base64Data);
+      const float32 = new Float32Array(int16.length);
+      let sum = 0;
+      for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] / 0x8000;
+        sum += float32[i] * float32[i];
+      }
+      voiceOutputLevel = Math.sqrt(sum / int16.length) * 4;
+      const buffer = voiceOutputCtx.createBuffer(1, float32.length, 24000);
+      buffer.copyToChannel(float32, 0);
+      const src = voiceOutputCtx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(voiceOutputCtx.destination);
+      const startAt = Math.max(voiceNextPlayTime, voiceOutputCtx.currentTime);
+      src.start(startAt);
+      voiceNextPlayTime = startAt + buffer.duration;
+      voiceActiveSources.push(src);
+      src.onended = () => { voiceActiveSources = voiceActiveSources.filter(s => s !== src); };
+    }
+
+    function stopVoicePlayback() {
+      voiceActiveSources.forEach(s => { try { s.stop(); } catch {} });
+      voiceActiveSources = [];
+      if (voiceOutputCtx) voiceNextPlayTime = voiceOutputCtx.currentTime;
+      voiceIsSpeaking = false;
+    }
+
+    function endVoiceChat() {
+      const wasActive = voiceActive;
+      voiceActive = false;
+      if (voiceWs) { try { voiceWs.send(JSON.stringify({ type: "end" })); } catch {} voiceWs.close(); voiceWs = null; }
+      if (voiceProcessor) { voiceProcessor.disconnect(); voiceProcessor.onaudioprocess = null; voiceProcessor = null; }
+      if (voiceInputCtx) { voiceInputCtx.close(); voiceInputCtx = null; }
+      if (voiceOutputCtx) { voiceOutputCtx.close(); voiceOutputCtx = null; }
+      if (voiceStream) { voiceStream.getTracks().forEach(t => t.stop()); voiceStream = null; }
+      stopVoicePlayback();
+      if (voiceOrbStop) { voiceOrbStop(); voiceOrbStop = null; }
+      const textPanel = document.getElementById("chatTextPanel");
+      const panel = document.getElementById("voicePanel");
+      if (textPanel) textPanel.style.display = "flex";
+      if (panel) panel.style.display = "none";
+      if (wasActive) sfx.click();
     }
 
     /* ---------- Training Tips ---------- */

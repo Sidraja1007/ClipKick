@@ -5,17 +5,20 @@ import multer from "multer";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
-import { GoogleGenAI, createUserContent, createPartFromUri, PartMediaResolutionLevel } from "@google/genai";
+import { WebSocketServer } from "ws";
+import { GoogleGenAI, createUserContent, createPartFromUri, PartMediaResolutionLevel, Modality } from "@google/genai";
 
 const execFileAsync = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const GEMINI_MODEL = "gemini-3.6-flash";
+const GEMINI_VOICE_MODEL = "gemini-3.1-flash-live-preview";
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("Missing GEMINI_API_KEY — set it in .env before starting the server.");
@@ -209,6 +212,89 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+const COACH_VOICE_SYSTEM_PROMPT = `You are ClipKick Coach, an AI voice assistant for a youth soccer highlight-reel app, talking live with a young soccer player who wants to improve and get noticed by coaches/scouts. This is a real-time spoken conversation, not a text chat — keep replies short and natural like something you'd actually say out loud (1-3 sentences), be warm and encouraging, and give real soccer knowledge (training, tactics, recovery, mindset), not generic filler.`;
+
+// Relays mic audio from the browser to Gemini's Live API and streams the spoken
+// reply back, so the API key never reaches the client (same rule as every other
+// Gemini call in this app) even though this one is a persistent two-way stream
+// instead of a single request/response.
+async function handleVoiceConnection(clientWs) {
+  let liveSession = null;
+  let closed = false;
+  const pending = [];
+
+  const sendToClient = obj => {
+    if (clientWs.readyState === clientWs.OPEN) clientWs.send(JSON.stringify(obj));
+  };
+
+  try {
+    liveSession = await ai.live.connect({
+      model: GEMINI_VOICE_MODEL,
+      config: {
+        responseModalities: [Modality.AUDIO],
+        systemInstruction: COACH_VOICE_SYSTEM_PROMPT,
+      },
+      callbacks: {
+        onopen: () => {},
+        onmessage: message => {
+          const content = message.serverContent;
+          if (content?.interrupted) sendToClient({ type: "interrupted" });
+          const parts = content?.modelTurn?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData?.data) {
+              sendToClient({
+                type: "audio",
+                data: part.inlineData.data,
+                mimeType: part.inlineData.mimeType || "audio/pcm;rate=24000",
+              });
+            }
+          }
+          if (content?.turnComplete) sendToClient({ type: "turnComplete" });
+        },
+        onerror: e => {
+          console.error("voice session error:", e.message || e);
+          sendToClient({ type: "error", error: "Coach's voice connection dropped — try again." });
+        },
+        onclose: () => {
+          if (!closed) sendToClient({ type: "closed" });
+        },
+      },
+    });
+  } catch (err) {
+    console.error("voice connect error:", err.message);
+    sendToClient({ type: "error", error: "Couldn't start the voice coach right now — try again." });
+    clientWs.close();
+    return;
+  }
+
+  sendToClient({ type: "ready" });
+  for (const msg of pending.splice(0)) forwardClientMessage(msg);
+
+  function forwardClientMessage(raw) {
+    let msg;
+    try {
+      msg = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (msg.type === "audio" && msg.data) {
+      liveSession.sendRealtimeInput({ audio: { data: msg.data, mimeType: msg.mimeType || "audio/pcm;rate=16000" } });
+    } else if (msg.type === "end") {
+      clientWs.close();
+    }
+  }
+
+  clientWs.on("message", raw => {
+    if (!liveSession) { pending.push(raw); return; }
+    forwardClientMessage(raw);
+  });
+
+  clientWs.on("close", () => {
+    closed = true;
+    liveSession?.close();
+  });
+}
+
 app.post("/api/training-tips", async (req, res) => {
   const { focus } = req.body;
   if (!focus || typeof focus !== "string") {
@@ -256,6 +342,10 @@ const clientDir = path.join(__dirname, "..", "client");
 app.use(express.static(clientDir));
 app.get("/", (req, res) => res.sendFile(path.join(clientDir, "ClipKick.dc.html")));
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+const wss = new WebSocketServer({ server: httpServer, path: "/voice" });
+wss.on("connection", handleVoiceConnection);
+
+httpServer.listen(PORT, () => {
   console.log(`ClipKick running at http://localhost:${PORT}`);
 });
