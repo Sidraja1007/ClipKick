@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
-const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("Missing GEMINI_API_KEY — set it in .env before starting the server.");

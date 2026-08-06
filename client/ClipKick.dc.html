@@ -410,7 +410,7 @@
     // When the frontend is hosted separately from the backend (e.g. static site on
     // Vercel, API server on Render/Railway), set this to the backend's full URL.
     // Leave empty when frontend and backend are served from the same origin (local dev).
-    const API_BASE = "https://clipkick-api.onrender.com";
+    const API_BASE = "";
 
     const profile = { name: "", position: "Forward", team: "" };
     const reelHistory = [];
@@ -435,6 +435,7 @@
     let reelStageTimer = null;
     let currentStage = 0;
     let reelFlowError = null;
+    let currentView = "reel";
 
     function formatFileSize(bytes) {
       if (bytes > 1e9) return (bytes / 1e9).toFixed(1) + " GB";
@@ -450,11 +451,16 @@
       return fallback;
     }
 
-    function showToast(msg) {
+    let toastHideTimer = null;
+
+    function showToast(msg, onClick) {
       const t = document.getElementById("toast");
       t.textContent = msg;
+      t.onclick = onClick || null;
+      t.style.cursor = onClick ? "pointer" : "default";
       t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 2800);
+      clearTimeout(toastHideTimer);
+      toastHideTimer = setTimeout(() => t.classList.remove("show"), onClick ? 5000 : 2800);
     }
 
     /* ---------- Navigation ---------- */
@@ -464,9 +470,12 @@
     };
 
     function navigate(view) {
+      currentView = view;
       document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
       document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
       document.getElementById("topbarTitle").textContent = VIEW_TITLES[view] || "";
+      if (view === "myreels") { selectedReelId = null; renderMyReels(); }
+      if (view === "profile") renderStats();
       closeSidebar();
     }
 
@@ -570,6 +579,11 @@
         clearTimeout(reelStageTimer);
         reelFlowState = "result";
         renderReelFlow();
+        renderMyReels();
+        renderStats();
+        if (currentView !== "reel") {
+          showToast("Your highlight reel is ready — come check it out.", () => navigate("reel"));
+        }
       } catch (err) {
         clearTimeout(reelStageTimer);
         reelFlowError = err.message || "Gemini couldn't analyze this video — try again.";
