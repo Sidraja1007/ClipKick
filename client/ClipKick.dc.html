@@ -315,7 +315,7 @@
     .trash-item-info span { font-size: 12px; color: var(--text-muted); }
 
     /* Chat */
-    .chat-panel { display: flex; flex-direction: column; height: calc(100vh - var(--nav-h) - 56px); min-height: 420px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .chat-panel { position: relative; display: flex; flex-direction: column; height: calc(100vh - var(--nav-h) - 56px); min-height: 420px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
     .message { max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
     .message.them { background: var(--bg-hover); align-self: flex-start; border-bottom-left-radius: 4px; }
@@ -350,6 +350,95 @@
       color: var(--text-muted); display: grid; place-items: center; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0;
     }
     .settings-toggle:hover { color: var(--text); border-color: var(--accent); transform: rotate(45deg); }
+
+    /* Onboarding */
+    .onboarding-overlay {
+      position: fixed; inset: 0; z-index: 500; background: var(--bg);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; overflow: hidden;
+    }
+    .onboarding-overlay.show { display: flex; }
+    .onboarding-overlay::before {
+      content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(700px circle at 20% 25%, rgba(91,141,239,0.10), transparent 60%),
+                  radial-gradient(600px circle at 80% 75%, rgba(255,92,53,0.06), transparent 60%);
+      animation: ambientDrift 18s ease-in-out infinite alternate;
+    }
+    .onboarding-progress {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2;
+      display: flex; gap: 6px; width: min(320px, calc(100% - 48px));
+    }
+    .onboarding-progress-seg { flex: 1; height: 4px; border-radius: 999px; background: var(--bg-hover); overflow: hidden; }
+    .onboarding-progress-seg .fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+    .onboarding-progress-seg.done .fill { width: 100%; }
+    .onboarding-back {
+      position: fixed; top: 16px; left: 16px; z-index: 2;
+      width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-muted); display: grid; place-items: center; cursor: pointer;
+    }
+    .onboarding-back:hover { color: var(--text); border-color: var(--accent); }
+    .onboarding-content {
+      position: relative; z-index: 1; width: 100%; max-width: 480px; text-align: center;
+      animation: fadeIn 0.35s ease;
+    }
+    .onboarding-content h1 {
+      font-family: "Instrument Serif", Georgia, serif; font-weight: 400; font-size: clamp(28px, 6vw, 40px);
+      line-height: 1.15; margin-bottom: 14px;
+    }
+    .onboarding-content h1 em { font-style: italic; color: var(--accent); }
+    .onboarding-content p.sub { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+    .onboarding-options { display: flex; flex-direction: column; gap: 10px; }
+    .onboarding-option {
+      padding: 16px 20px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg-card);
+      color: var(--text); font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .onboarding-option:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+    .onboarding-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .onboarding-number-field {
+      display: flex; align-items: center; gap: 10px; background: var(--bg-hover); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 20px; margin-bottom: 20px;
+    }
+    .onboarding-number-field input {
+      flex: 1; background: none; border: none; outline: none; color: var(--text); font: inherit; font-size: 20px; font-weight: 600;
+      text-align: center;
+    }
+    .onboarding-number-field span { color: var(--text-muted); font-size: 14px; }
+    .onboarding-fact-icon { font-size: 40px; margin-bottom: 16px; }
+    .onboarding-fact-tie { margin-top: 18px; padding: 14px 18px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius-sm); font-size: 14px; color: var(--text); }
+
+    .onboarding-loading { display: flex; flex-direction: column; align-items: center; }
+    .onboarding-ring-wrap { position: relative; width: 180px; height: 180px; margin-bottom: 28px; }
+    .onboarding-ring-wrap canvas { position: absolute; inset: 0; }
+    .onboarding-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .onboarding-ring-bg { fill: none; stroke: var(--bg-hover); stroke-width: 6; }
+    .onboarding-ring-fg { fill: none; stroke: #5b8def; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 0 8px #5b8defaa); transition: stroke-dashoffset 0.3s ease; }
+    .onboarding-percent {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-size: 34px; font-weight: 700; color: #0a1a3a; text-shadow: 0 1px 3px rgba(255,255,255,0.4);
+    }
+    .onboarding-status { min-height: 20px; color: var(--text-muted); font-size: 14px; transition: opacity 0.3s ease; }
+
+    /* Guided product tour */
+    .tour-overlay { position: fixed; inset: 0; z-index: 600; display: none; }
+    .tour-overlay.show { display: block; }
+    .tour-spotlight {
+      position: absolute; border-radius: 12px; border: 2px solid var(--accent);
+      box-shadow: 0 0 0 9999px rgba(4,5,8,0.8), 0 0 24px var(--accent-glow);
+      transition: all 0.35s cubic-bezier(.4,0,.2,1); pointer-events: none;
+    }
+    .tour-card {
+      position: absolute; max-width: 280px; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); transition: all 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .tour-card h4 { font-size: 15px; margin-bottom: 6px; }
+    .tour-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+    .tour-card-actions { display: flex; justify-content: space-between; align-items: center; }
+    .tour-skip { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+    .tour-skip:hover { color: var(--text-muted); }
+    .tour-dots { display: flex; gap: 5px; }
+    .tour-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+    .tour-dot.active { background: var(--accent); }
 
     /* Settings panel */
     .settings-overlay {
@@ -455,6 +544,18 @@
       .sidebar.open { left: 0; }
       .feedback-grid { grid-template-columns: 1fr; }
       .menu-toggle { display: flex !important; }
+      .content { padding: 20px 16px !important; }
+      .topbar { padding: 0 14px; }
+      .end-chat-btn { position: absolute; top: 14px; bottom: auto; right: 14px; padding: 8px 12px; font-size: 12px; }
+      .match-card { flex-direction: column; align-items: stretch; }
+      .match-card > div:nth-child(3) { flex-direction: row !important; width: 100%; }
+      .match-card > div:nth-child(3) button { flex: 1; }
+      .match-card > button[aria-label="Edit match"] { align-self: flex-start; width: fit-content; }
+      .theme-grid, .persona-grid { grid-template-columns: repeat(2, 1fr); }
+      .settings-modal { padding: 20px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .card-delete-btn { width: 34px; height: 34px; }
+      .trash-item { flex-wrap: wrap; }
     }
     .menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; }
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
@@ -462,9 +563,21 @@
   </style>
 </head>
 <body>
-  <div class="overlay" id="overlay"></div>
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-progress" id="onboardingProgress" style="display:none;"></div>
+    <button class="onboarding-back" id="onboardingBack" onclick="onboardingGoBack()" style="display:none;" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <div class="onboarding-content" id="onboardingContent"></div>
+  </div>
+
+  <div class="tour-overlay" id="tourOverlay">
+    <div class="tour-spotlight" id="tourSpotlight"></div>
+    <div class="tour-card" id="tourCard"></div>
+  </div>
 
   <div class="app">
+    <div class="overlay" id="overlay"></div>
     <aside class="sidebar" id="sidebar">
       <div class="logo">
         <div class="logo-mark">CK</div>
@@ -478,6 +591,10 @@
         <button class="nav-item active" data-view="home">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
+        </button>
+        <button class="nav-item" data-view="demo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          Demo
         </button>
 
         <div class="nav-section">Reels</div>
@@ -553,8 +670,16 @@
           <div class="hero">
             <h1>Your AI soccer coach, <em>all in one place</em>.</h1>
             <p>ClipKick turns your game footage into a highlight reel, gives you real coaching feedback (by text or voice), personalized training tips, and monthly progress check-ins — everything a youth soccer player needs to improve and get noticed, in one app.</p>
+            <button class="btn btn-primary" style="margin-top:20px;" onclick="navigate('demo')">Watch the demo →</button>
+          </div>
+        </section>
+
+        <!-- DEMO -->
+        <section class="view" id="view-demo">
+          <div class="hero">
+            <h1>See ClipKick <em>in action</em>.</h1>
+            <p>A full walkthrough — highlight reels, coach chat, training tips, check-ins, and everything else — in about a minute.</p>
             <div class="demo-video-section">
-              <h3>See ClipKick in action</h3>
               <video class="demo-video" src="demo.mp4" controls muted loop autoplay playsinline preload="metadata"></video>
             </div>
           </div>
@@ -654,6 +779,7 @@
               <label>Team</label>
               <input type="text" id="profileTeam" placeholder="Your team" />
             </div>
+            <div id="onboardingSummary"></div>
             <div class="stats-grid" id="statsGrid"></div>
           </div>
         </section>
@@ -728,6 +854,15 @@
       notify: () => tone(660, 0, 0.12, { type: "sine", gain: 0.045, glideTo: 880 }),
       success: () => { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.09, 0.22, { type: "sine", gain: 0.05 })); },
       error: () => tone(160, 0, 0.22, { type: "sawtooth", gain: 0.04, glideTo: 90 }),
+      personalizeStart: () => {
+        tone(220, 0, 0.9, { type: "sine", gain: 0.05, glideTo: 660 });
+        tone(330, 0.05, 0.85, { type: "sine", gain: 0.035, glideTo: 990 });
+        tone(1320, 0.35, 0.5, { type: "sine", gain: 0.02, glideTo: 1760 });
+      },
+      personalizeComplete: () => {
+        [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.07, 0.5, { type: "sine", gain: 0.045 }));
+        tone(2093, 0.28, 0.7, { type: "sine", gain: 0.02, glideTo: 2637 });
+      },
     };
     function toggleSound() {
       soundEnabled = !soundEnabled;
@@ -794,7 +929,7 @@
     }
 
     /* ---------- Animated orb (canvas, used by processing screen + voice panel) ---------- */
-    function startOrb(canvas, { size = 120, energy = () => 0.3 } = {}) {
+    function startOrb(canvas, { size = 120, energy = () => 0.3, color = null } = {}) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = size * dpr;
       canvas.height = size * dpr;
@@ -802,7 +937,7 @@
       canvas.style.height = size + "px";
       const ctx = canvas.getContext("2d");
       ctx.scale(dpr, dpr);
-      const rgb = (getComputedStyle(document.documentElement).getPropertyValue("--theme-bg1").trim() || "255,92,53");
+      const rgb = color || (getComputedStyle(document.documentElement).getPropertyValue("--theme-bg1").trim() || "255,92,53");
       let raf;
       const start = performance.now();
       function frame(now) {
@@ -918,7 +1053,277 @@
       sfx.click();
     }
 
-    const profile = { name: "", position: "Forward", team: "" };
+    const profile = {
+      name: "", position: "Forward", team: "",
+      age: "", skillLevel: "", strongFoot: "", goal: "", improveArea: "", heightCm: "", weightKg: "",
+      onboarded: false, tourDone: false,
+    };
+
+    /* ---------- Onboarding (first-visit personalization) ---------- */
+    const ONBOARDING_STEPS = [
+      { type: "welcome" },
+      { type: "question", key: "age", question: "How old are you?", kind: "number", unit: "years old", placeholder: "e.g. 12", min: 4 },
+      { type: "question", key: "position", question: "What position do you play?", kind: "choice", options: ["Forward", "Midfielder", "Defender", "Goalkeeper"] },
+      { type: "question", key: "skillLevel", question: "What's your current skill level?", kind: "choice", options: ["Beginner", "Intermediate", "Advanced", "Competitive / Elite"] },
+      { type: "fact", icon: "⚽", text: "Pro scouts often form an impression within the first 30 seconds of match footage — a tight highlight reel matters more than a full match tape.", tie: "That's exactly what ClipKick builds for you automatically." },
+      { type: "question", key: "strongFoot", question: "Which is your strongest foot?", kind: "choice", options: ["Right", "Left", "Both"] },
+      { type: "question", key: "goal", question: "What's your main goal right now?", kind: "choice", options: ["Get recruited by a team or college", "Improve for my current team", "Prepare for tryouts", "Just get better for fun"] },
+      { type: "fact", icon: "🧠", text: "Sports science backs this: watching yourself perform a skill — not just being told about it — speeds up how fast your brain corrects mistakes. It's called video feedback learning.", tie: "ClipKick's timestamped moments give you exactly that — a fast way to actually see your best (and worst) plays, not just hear about them." },
+      { type: "question", key: "improveArea", question: "What do you want to improve most?", kind: "choice", options: ["Speed & agility", "First touch & ball control", "Shooting & finishing", "Passing & vision", "Defending & tackling", "Fitness & stamina"] },
+      { type: "question", key: "heightCm", question: "What's your height?", kind: "number", unit: "cm", placeholder: "e.g. 170" },
+      { type: "question", key: "weightKg", question: "What's your weight?", kind: "number", unit: "kg", placeholder: "e.g. 60" },
+      { type: "fact", icon: "📊", text: "A pro player's actual ball-contact time in a 90-minute match is only a couple of minutes — everything else is positioning, movement, and decision-making off the ball.", tie: "ClipKick's AI doesn't just look for goals — it catches the off-ball movement and positioning that make you look like a smarter player." },
+      { type: "loading" },
+    ];
+    let onboardingIndex = 0;
+    let onboardingAnswers = {};
+
+    function onboardingShow() {
+      const overlay = document.getElementById("onboardingOverlay");
+      if (overlay) overlay.classList.add("show");
+      onboardingIndex = 0;
+      onboardingAnswers = {};
+      renderOnboarding();
+    }
+
+    function onboardingRenderProgress() {
+      const progressEl = document.getElementById("onboardingProgress");
+      const backBtn = document.getElementById("onboardingBack");
+      const questionSteps = ONBOARDING_STEPS.filter(s => s.type === "question" || s.type === "fact");
+      const step = ONBOARDING_STEPS[onboardingIndex];
+      if (step.type === "welcome" || step.type === "loading") {
+        progressEl.style.display = "none";
+        backBtn.style.display = "none";
+        return;
+      }
+      const posInFlow = questionSteps.indexOf(step);
+      progressEl.style.display = "flex";
+      progressEl.innerHTML = questionSteps.map((_, i) => `
+        <div class="onboarding-progress-seg ${i <= posInFlow ? "done" : ""}"><div class="fill"></div></div>`).join("");
+      backBtn.style.display = onboardingIndex > 1 ? "grid" : "none";
+    }
+
+    function renderOnboarding() {
+      const step = ONBOARDING_STEPS[onboardingIndex];
+      const root = document.getElementById("onboardingContent");
+      onboardingRenderProgress();
+
+      if (step.type === "welcome") {
+        root.innerHTML = `
+          <h1>Let's set up your <em>ClipKick</em>.</h1>
+          <p class="sub">A few quick questions so your training tips, feedback, and highlight reels actually fit you — takes under a minute.</p>
+          <button class="btn btn-primary" onclick="onboardingNext()">Get started →</button>`;
+      } else if (step.type === "question") {
+        const existing = onboardingAnswers[step.key];
+        if (step.kind === "choice") {
+          root.innerHTML = `
+            <h1>${step.question}</h1>
+            <div class="onboarding-options">
+              ${step.options.map(opt => `
+                <button class="onboarding-option ${existing === opt ? "selected" : ""}" onclick="onboardingSelectChoice('${step.key}', this)">${opt}</button>`).join("")}
+            </div>`;
+        } else {
+          root.innerHTML = `
+            <h1>${step.question}</h1>
+            <div class="onboarding-number-field">
+              <input type="number" id="onboardingNumberInput" min="${step.min || 0}" placeholder="${step.placeholder}" value="${existing || ""}" />
+              <span>${step.unit}</span>
+            </div>
+            <button class="btn btn-primary" onclick="onboardingSubmitNumber('${step.key}', ${step.min || 0})">Continue →</button>`;
+          setTimeout(() => document.getElementById("onboardingNumberInput")?.focus(), 50);
+        }
+      } else if (step.type === "fact") {
+        root.innerHTML = `
+          <div class="onboarding-fact-icon">${step.icon}</div>
+          <h1 style="font-size:22px;">${step.text}</h1>
+          <div class="onboarding-fact-tie">${step.tie}</div>
+          <button class="btn btn-primary" style="margin-top:24px;" onclick="onboardingNext()">Continue →</button>`;
+      } else if (step.type === "loading") {
+        root.innerHTML = `
+          <div class="onboarding-loading">
+            <div class="onboarding-ring-wrap">
+              <canvas id="onboardingOrbCanvas"></canvas>
+              <svg class="onboarding-ring" viewBox="0 0 180 180">
+                <circle class="onboarding-ring-bg" cx="90" cy="90" r="82"/>
+                <circle class="onboarding-ring-fg" id="onboardingRingFg" cx="90" cy="90" r="82" stroke-dasharray="515.2" stroke-dashoffset="515.2"/>
+              </svg>
+              <div class="onboarding-percent" id="onboardingPercent">0%</div>
+            </div>
+            <h1 style="font-size:20px;margin-bottom:6px;">Personalizing your ClipKick</h1>
+            <div class="onboarding-status" id="onboardingStatus">Analyzing your answers…</div>
+          </div>`;
+        runOnboardingLoading();
+      }
+    }
+
+    function onboardingSelectChoice(key, btnEl) {
+      onboardingAnswers[key] = btnEl.textContent;
+      sfx.click();
+      setTimeout(onboardingNext, 180);
+    }
+
+    function onboardingSubmitNumber(key, min) {
+      const input = document.getElementById("onboardingNumberInput");
+      const val = Number(input.value);
+      if (!input.value || Number.isNaN(val) || val < min) {
+        input.style.borderColor = "var(--accent)";
+        showToast(min > 0 ? `Enter a number of at least ${min}` : "Enter a number to continue");
+        return;
+      }
+      onboardingAnswers[key] = val;
+      sfx.click();
+      onboardingNext();
+    }
+
+    function onboardingNext() {
+      if (onboardingIndex < ONBOARDING_STEPS.length - 1) {
+        onboardingIndex++;
+        renderOnboarding();
+      }
+    }
+
+    function onboardingGoBack() {
+      if (onboardingIndex > 1) {
+        onboardingIndex--;
+        sfx.click();
+        renderOnboarding();
+      }
+    }
+
+    const ONBOARDING_LOADING_STATUS = [
+      "Analyzing your answers…",
+      "Calibrating your position insights…",
+      "Tuning your training focus…",
+      "Setting up your highlight-reel AI…",
+      "Almost ready…",
+    ];
+
+    function runOnboardingLoading() {
+      const canvas = document.getElementById("onboardingOrbCanvas");
+      let orbStop = null;
+      if (canvas) orbStop = startOrb(canvas, { size: 180, energy: () => 0.5 + Math.random() * 0.3, color: "91,141,239" });
+
+      sfx.personalizeStart();
+      const ringFg = document.getElementById("onboardingRingFg");
+      const percentEl = document.getElementById("onboardingPercent");
+      const statusEl = document.getElementById("onboardingStatus");
+      const circumference = 515.2;
+      const durationMs = 4800;
+      const start = performance.now();
+      let lastStatusIdx = -1;
+
+      function frame(now) {
+        const t = Math.min(1, (now - start) / durationMs);
+        const pct = Math.round(t * 100);
+        if (ringFg) ringFg.style.strokeDashoffset = String(circumference * (1 - t));
+        if (percentEl) percentEl.textContent = `${pct}%`;
+        const statusIdx = Math.min(ONBOARDING_LOADING_STATUS.length - 1, Math.floor(t * ONBOARDING_LOADING_STATUS.length));
+        if (statusIdx !== lastStatusIdx && statusEl) {
+          statusEl.style.opacity = 0;
+          setTimeout(() => { statusEl.textContent = ONBOARDING_LOADING_STATUS[statusIdx]; statusEl.style.opacity = 1; }, 180);
+          lastStatusIdx = statusIdx;
+        }
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          if (orbStop) orbStop();
+          sfx.personalizeComplete();
+          setTimeout(onboardingFinish, 500);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function onboardingFinish() {
+      Object.assign(profile, onboardingAnswers);
+      profile.onboarded = true;
+      saveState();
+      const overlay = document.getElementById("onboardingOverlay");
+      if (overlay) overlay.classList.remove("show");
+      renderProfile();
+      renderStats();
+      navigate("home");
+      startProductTour();
+    }
+
+    /* ---------- Guided product tour (first run, right after onboarding) ---------- */
+    const TOUR_STEPS = [
+      { selector: ".logo", title: "Welcome to ClipKick", text: "Everything lives in this sidebar — let's do a 30-second tour." },
+      { selector: '.nav-item[data-view="reel"]', title: "Highlight Reel", text: "Upload your match or training footage — AI finds your best goals, assists, and plays automatically.", openSidebar: true },
+      { selector: '.nav-item[data-view="chat"]', title: "Coach Chat", text: "Ask your AI coach anything by text, or tap the mic for a live voice conversation.", openSidebar: true },
+      { selector: '.nav-item[data-view="tips"]', title: "Training Tips & Check-Ins", text: "Get personalized drills and monthly progress reviews based on your reels.", openSidebar: true },
+      { selector: "#settingsToggle", title: "Make it yours", text: "Tap the gear anytime to change your theme or your coach's voice." },
+    ];
+    let tourStepIndex = 0;
+
+    function startProductTour() {
+      if (profile.tourDone) return;
+      tourStepIndex = 0;
+      document.getElementById("tourOverlay").classList.add("show");
+      renderTourStep();
+    }
+
+    function renderTourStep() {
+      const step = TOUR_STEPS[tourStepIndex];
+      if (step.openSidebar) document.getElementById("sidebar").classList.add("open");
+      else document.getElementById("sidebar").classList.remove("open");
+
+      requestAnimationFrame(() => {
+        const target = document.querySelector(step.selector);
+        const spotlight = document.getElementById("tourSpotlight");
+        const card = document.getElementById("tourCard");
+        const pad = 8;
+
+        if (target) {
+          const r = target.getBoundingClientRect();
+          spotlight.style.display = "block";
+          spotlight.style.left = `${r.left - pad}px`;
+          spotlight.style.top = `${r.top - pad}px`;
+          spotlight.style.width = `${r.width + pad * 2}px`;
+          spotlight.style.height = `${r.height + pad * 2}px`;
+
+          const cardTop = r.bottom + 16;
+          const fitsBelow = cardTop + 160 < window.innerHeight;
+          card.style.top = fitsBelow ? `${cardTop}px` : `${Math.max(16, r.top - 176)}px`;
+          let left = r.left;
+          left = Math.min(left, window.innerWidth - 296);
+          left = Math.max(16, left);
+          card.style.left = `${left}px`;
+        } else {
+          spotlight.style.display = "none";
+          card.style.top = "50%"; card.style.left = "50%"; card.style.transform = "translate(-50%,-50%)";
+        }
+
+        const isLast = tourStepIndex === TOUR_STEPS.length - 1;
+        card.innerHTML = `
+          <h4>${step.title}</h4>
+          <p>${step.text}</p>
+          <div class="tour-card-actions">
+            <button class="tour-skip" onclick="tourEnd()">Skip tour</button>
+            <div class="tour-dots">${TOUR_STEPS.map((_, i) => `<div class="tour-dot ${i === tourStepIndex ? "active" : ""}"></div>`).join("")}</div>
+            <button class="btn btn-primary" style="padding:8px 16px;font-size:13px;" onclick="tourNext()">${isLast ? "Let's go" : "Next"}</button>
+          </div>`;
+      });
+    }
+
+    function tourNext() {
+      sfx.click();
+      if (tourStepIndex < TOUR_STEPS.length - 1) {
+        tourStepIndex++;
+        renderTourStep();
+      } else {
+        tourEnd();
+      }
+    }
+
+    function tourEnd() {
+      document.getElementById("tourOverlay").classList.remove("show");
+      document.getElementById("sidebar").classList.remove("open");
+      profile.tourDone = true;
+      saveState();
+      sfx.success();
+    }
+
     const reelHistory = [];
     const deletedReels = [];
     let selectedReelId = null;
@@ -1008,7 +1413,7 @@
 
     /* ---------- Navigation ---------- */
     const VIEW_TITLES = {
-      home: "Home", reel: "Highlight Reel", myreels: "My Reels", chat: "Coach Chat", chathistory: "Chat History",
+      home: "Home", demo: "Demo", reel: "Highlight Reel", myreels: "My Reels", chat: "Coach Chat", chathistory: "Chat History",
       tips: "Training Tips", checkin: "Monthly Check-In", profile: "Player Profile", schedule: "Match Schedule",
       trash: "Recently Deleted",
     };
@@ -1372,7 +1777,7 @@
         root.innerHTML = `
           <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="selectedSessionId=null; renderChatHistory();">← Back to Chat History</button>
           <div class="reel-flow-card">
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">${s.startedAt} — ${s.endedAt}</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">${s.isVoice ? "🎙️ Voice chat" : "💬 Text chat"} · ${s.startedAt} — ${s.endedAt}</p>
             <div class="chat-messages" style="height:auto;max-height:none;padding:0;">
               ${s.messages.map(m => `<div class="message ${m.from}">${m.text}</div>`).join("")}
             </div>
@@ -1391,7 +1796,7 @@
         <div class="reel-card" onclick="selectedSessionId=${s.id}; renderChatHistory();">
           <button class="card-delete-btn" onclick="event.stopPropagation(); deleteSession(${s.id});" aria-label="Delete chat" title="Delete chat">&times;</button>
           <div class="reel-card-info">
-            <h3>Chat — ${s.endedAt}</h3>
+            <h3>${s.isVoice ? "🎙️" : "💬"} Chat — ${s.endedAt}</h3>
             <p>${s.messages.length} messages</p>
           </div>
         </div>`).join("")}</div>`;
@@ -1466,6 +1871,8 @@
     let voiceIsSpeaking = false;
     let voiceNextPlayTime = 0;
     let voiceActiveSources = [];
+    let voiceTranscript = [];
+    let voiceTurnBuffer = { me: "", them: "" };
 
     function setVoiceStatus(html) {
       const el = document.getElementById("voiceStatus");
@@ -1488,6 +1895,8 @@
 
     async function startVoiceChat() {
       voiceActive = true;
+      voiceTranscript = [];
+      voiceTurnBuffer = { me: "", them: "" };
       document.getElementById("chatTextPanel").style.display = "none";
       document.getElementById("voicePanel").style.display = "flex";
       const persona = VOICE_PERSONAS_CLIENT[currentPersona];
@@ -1540,9 +1949,14 @@
           playVoiceChunk(msg.data);
         } else if (msg.type === "interrupted") {
           stopVoicePlayback();
+        } else if (msg.type === "transcript") {
+          voiceTurnBuffer[msg.role] = (voiceTurnBuffer[msg.role] || "") + msg.text;
         } else if (msg.type === "turnComplete") {
           voiceIsSpeaking = false;
           setVoiceStatus("<strong>Listening…</strong> talk whenever you're ready");
+          if (voiceTurnBuffer.me.trim()) voiceTranscript.push({ from: "me", text: voiceTurnBuffer.me.trim() });
+          if (voiceTurnBuffer.them.trim()) voiceTranscript.push({ from: "them", text: voiceTurnBuffer.them.trim() });
+          voiceTurnBuffer = { me: "", them: "" };
         } else if (msg.type === "error") {
           showToast(msg.error || "Voice coach hit an error");
           endVoiceChat();
@@ -1603,6 +2017,22 @@
       const panel = document.getElementById("voicePanel");
       if (textPanel) textPanel.style.display = "flex";
       if (panel) panel.style.display = "none";
+
+      if (voiceTurnBuffer.me.trim()) voiceTranscript.push({ from: "me", text: voiceTurnBuffer.me.trim() });
+      if (voiceTurnBuffer.them.trim()) voiceTranscript.push({ from: "them", text: voiceTurnBuffer.them.trim() });
+      voiceTurnBuffer = { me: "", them: "" };
+      if (voiceTranscript.length) {
+        chatSessions.unshift({
+          id: Date.now(),
+          startedAt: new Date().toLocaleString(),
+          endedAt: new Date().toLocaleString(),
+          messages: voiceTranscript,
+          isVoice: true,
+        });
+        voiceTranscript = [];
+        saveState();
+        showToast("Your voice chat has been saved.");
+      }
       if (wasActive) sfx.click();
     }
 
@@ -1671,8 +2101,32 @@
       document.getElementById("profileName").value = profile.name;
       document.getElementById("profilePosition").value = profile.position;
       document.getElementById("profileTeam").value = profile.team;
+      renderOnboardingSummary();
       renderProfileBadge();
       renderStats();
+    }
+
+    function renderOnboardingSummary() {
+      const root = document.getElementById("onboardingSummary");
+      if (!root) return;
+      if (!profile.onboarded) { root.innerHTML = ""; return; }
+      const rows = [
+        ["Age", profile.age ? `${profile.age}` : null],
+        ["Skill level", profile.skillLevel],
+        ["Strong foot", profile.strongFoot],
+        ["Goal", profile.goal],
+        ["Working on", profile.improveArea],
+        ["Height", profile.heightCm ? `${profile.heightCm} cm` : null],
+        ["Weight", profile.weightKg ? `${profile.weightKg} kg` : null],
+      ].filter(([, v]) => v);
+      if (!rows.length) { root.innerHTML = ""; return; }
+      root.innerHTML = `
+        <div style="margin:20px 0;padding:16px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:10px;">From your setup</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;font-size:13px;">
+            ${rows.map(([label, val]) => `<div><span style="color:var(--text-muted);">${label}:</span> ${val}</div>`).join("")}
+          </div>
+        </div>`;
     }
 
     function renderProfileBadge() {
@@ -1804,6 +2258,7 @@
       renderProfile();
       renderSchedule();
       wireProfileInputs();
+      if (!profile.onboarded) onboardingShow();
     }
 
     init();

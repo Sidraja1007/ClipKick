@@ -255,6 +255,10 @@ async function handleVoiceConnection(clientWs, req) {
         responseModalities: [Modality.AUDIO],
         systemInstruction: `${COACH_VOICE_SYSTEM_PROMPT}\n\n${persona.flavor}`,
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voiceName } } },
+        // Lets us relay a text transcript alongside the audio, so voice
+        // conversations can be saved to Chat History the same as typed ones.
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
       },
       callbacks: {
         onopen: () => {},
@@ -270,6 +274,12 @@ async function handleVoiceConnection(clientWs, req) {
                 mimeType: part.inlineData.mimeType || "audio/pcm;rate=24000",
               });
             }
+          }
+          if (content?.inputTranscription?.text) {
+            sendToClient({ type: "transcript", role: "me", text: content.inputTranscription.text });
+          }
+          if (content?.outputTranscription?.text) {
+            sendToClient({ type: "transcript", role: "them", text: content.outputTranscription.text });
           }
           if (content?.turnComplete) sendToClient({ type: "turnComplete" });
         },
