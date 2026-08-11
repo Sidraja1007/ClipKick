@@ -404,6 +404,13 @@
       text-align: center;
     }
     .onboarding-number-field span { color: var(--text-muted); font-size: 14px; }
+    .onboarding-unit-toggle { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .onboarding-unit-btn {
+      padding: 6px 18px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--bg-card);
+      color: var(--text-muted); font: inherit; font-size: 13px; font-weight: 600; text-transform: uppercase; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .onboarding-unit-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
     .onboarding-fact-icon { font-size: 40px; margin-bottom: 16px; }
     .onboarding-fact-tie { margin-top: 18px; padding: 14px 18px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius-sm); font-size: 14px; color: var(--text); }
 
@@ -1062,6 +1069,7 @@
     /* ---------- Onboarding (first-visit personalization) ---------- */
     const ONBOARDING_STEPS = [
       { type: "welcome" },
+      { type: "question", key: "name", question: "What's your name?", kind: "name" },
       { type: "question", key: "age", question: "How old are you?", kind: "number", unit: "years old", placeholder: "e.g. 12", min: 4 },
       { type: "question", key: "position", question: "What position do you play?", kind: "choice", options: ["Forward", "Midfielder", "Defender", "Goalkeeper"] },
       { type: "question", key: "skillLevel", question: "What's your current skill level?", kind: "choice", options: ["Beginner", "Intermediate", "Advanced", "Competitive / Elite"] },
@@ -1070,13 +1078,26 @@
       { type: "question", key: "goal", question: "What's your main goal right now?", kind: "choice", options: ["Get recruited by a team or college", "Improve for my current team", "Prepare for tryouts", "Just get better for fun"] },
       { type: "fact", icon: "🧠", text: "Sports science backs this: watching yourself perform a skill — not just being told about it — speeds up how fast your brain corrects mistakes. It's called video feedback learning.", tie: "ClipKick's timestamped moments give you exactly that — a fast way to actually see your best (and worst) plays, not just hear about them." },
       { type: "question", key: "improveArea", question: "What do you want to improve most?", kind: "choice", options: ["Speed & agility", "First touch & ball control", "Shooting & finishing", "Passing & vision", "Defending & tackling", "Fitness & stamina"] },
-      { type: "question", key: "heightCm", question: "What's your height?", kind: "number", unit: "cm", placeholder: "e.g. 170" },
-      { type: "question", key: "weightKg", question: "What's your weight?", kind: "number", unit: "kg", placeholder: "e.g. 60" },
+      { type: "question", key: "heightCm", question: "What's your height?", kind: "height", units: ["cm", "ft"] },
+      { type: "question", key: "weightKg", question: "What's your weight?", kind: "weight", units: ["kg", "lb"] },
       { type: "fact", icon: "📊", text: "A pro player's actual ball-contact time in a 90-minute match is only a couple of minutes — everything else is positioning, movement, and decision-making off the ball.", tie: "ClipKick's AI doesn't just look for goals — it catches the off-ball movement and positioning that make you look like a smarter player." },
       { type: "loading" },
     ];
     let onboardingIndex = 0;
     let onboardingAnswers = {};
+    let onboardingUnits = { heightCm: "cm", weightKg: "kg" };
+
+    function renderUnitToggle(step, activeUnit) {
+      return `<div class="onboarding-unit-toggle">
+        ${step.units.map(u => `<button type="button" class="onboarding-unit-btn ${u === activeUnit ? "active" : ""}" onclick="onboardingSetUnit('${step.key}','${u}')">${u}</button>`).join("")}
+      </div>`;
+    }
+
+    function onboardingSetUnit(key, unit) {
+      onboardingUnits[key] = unit;
+      sfx.click();
+      renderOnboarding();
+    }
 
     function onboardingShow() {
       const overlay = document.getElementById("onboardingOverlay");
@@ -1122,6 +1143,52 @@
               ${step.options.map(opt => `
                 <button class="onboarding-option ${existing === opt ? "selected" : ""}" onclick="onboardingSelectChoice('${step.key}', this)">${opt}</button>`).join("")}
             </div>`;
+        } else if (step.kind === "name") {
+          root.innerHTML = `
+            <h1>${step.question}</h1>
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+              <div class="onboarding-number-field" style="flex:1;">
+                <input type="text" id="onboardingFirstName" placeholder="First name" value="${onboardingAnswers.firstName || ""}" style="text-align:left;font-size:15px;font-weight:500;" />
+              </div>
+              <div class="onboarding-number-field" style="flex:1;">
+                <input type="text" id="onboardingLastName" placeholder="Last name" value="${onboardingAnswers.lastName || ""}" style="text-align:left;font-size:15px;font-weight:500;" />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="onboardingSubmitName()">Continue →</button>`;
+          setTimeout(() => document.getElementById("onboardingFirstName")?.focus(), 50);
+        } else if (step.kind === "height") {
+          const unit = onboardingUnits.heightCm || step.units[0];
+          root.innerHTML = `
+            <h1>${step.question}</h1>
+            ${renderUnitToggle(step, unit)}
+            ${unit === "cm" ? `
+              <div class="onboarding-number-field">
+                <input type="number" id="onboardingNumberInput" min="0" placeholder="e.g. 170" value="${onboardingAnswers._heightCmVal || ""}" />
+                <span>cm</span>
+              </div>` : `
+              <div style="display:flex;gap:10px;margin-bottom:20px;">
+                <div class="onboarding-number-field" style="flex:1;">
+                  <input type="number" id="onboardingFeetInput" min="0" placeholder="e.g. 5" value="${onboardingAnswers._heightFtVal || ""}" />
+                  <span>ft</span>
+                </div>
+                <div class="onboarding-number-field" style="flex:1;">
+                  <input type="number" id="onboardingInchesInput" min="0" max="11" placeholder="e.g. 7" value="${onboardingAnswers._heightInVal || ""}" />
+                  <span>in</span>
+                </div>
+              </div>`}
+            <button class="btn btn-primary" onclick="onboardingSubmitHeight()">Continue →</button>`;
+          setTimeout(() => (document.getElementById("onboardingNumberInput") || document.getElementById("onboardingFeetInput"))?.focus(), 50);
+        } else if (step.kind === "weight") {
+          const unit = onboardingUnits.weightKg || step.units[0];
+          root.innerHTML = `
+            <h1>${step.question}</h1>
+            ${renderUnitToggle(step, unit)}
+            <div class="onboarding-number-field">
+              <input type="number" id="onboardingNumberInput" min="0" placeholder="${unit === "kg" ? "e.g. 60" : "e.g. 132"}" value="${(unit === "kg" ? onboardingAnswers._weightKgVal : onboardingAnswers._weightLbVal) || ""}" />
+              <span>${unit}</span>
+            </div>
+            <button class="btn btn-primary" onclick="onboardingSubmitWeight()">Continue →</button>`;
+          setTimeout(() => document.getElementById("onboardingNumberInput")?.focus(), 50);
         } else {
           root.innerHTML = `
             <h1>${step.question}</h1>
@@ -1171,6 +1238,58 @@
         return;
       }
       onboardingAnswers[key] = val;
+      sfx.click();
+      onboardingNext();
+    }
+
+    function onboardingSubmitName() {
+      const first = document.getElementById("onboardingFirstName").value.trim();
+      const last = document.getElementById("onboardingLastName").value.trim();
+      if (!first) { showToast("Enter at least your first name"); return; }
+      onboardingAnswers.firstName = first;
+      onboardingAnswers.lastName = last;
+      onboardingAnswers.name = `${first} ${last}`.trim();
+      sfx.click();
+      onboardingNext();
+    }
+
+    function onboardingSubmitHeight() {
+      const unit = onboardingUnits.heightCm || "cm";
+      let cm;
+      if (unit === "cm") {
+        const input = document.getElementById("onboardingNumberInput");
+        const val = Number(input.value);
+        if (!input.value || Number.isNaN(val) || val <= 0) { showToast("Enter a height to continue"); return; }
+        onboardingAnswers._heightCmVal = val;
+        cm = val;
+      } else {
+        const ftInput = document.getElementById("onboardingFeetInput");
+        const inInput = document.getElementById("onboardingInchesInput");
+        const ft = Number(ftInput.value), inch = Number(inInput.value || 0);
+        if (!ftInput.value || Number.isNaN(ft) || ft < 0) { showToast("Enter your height in feet"); return; }
+        onboardingAnswers._heightFtVal = ft;
+        onboardingAnswers._heightInVal = inch;
+        cm = Math.round((ft * 12 + inch) * 2.54);
+      }
+      onboardingAnswers.heightCm = cm;
+      sfx.click();
+      onboardingNext();
+    }
+
+    function onboardingSubmitWeight() {
+      const unit = onboardingUnits.weightKg || "kg";
+      const input = document.getElementById("onboardingNumberInput");
+      const val = Number(input.value);
+      if (!input.value || Number.isNaN(val) || val <= 0) { showToast("Enter a weight to continue"); return; }
+      let kg;
+      if (unit === "kg") {
+        onboardingAnswers._weightKgVal = val;
+        kg = val;
+      } else {
+        onboardingAnswers._weightLbVal = val;
+        kg = Math.round(val * 0.453592 * 10) / 10;
+      }
+      onboardingAnswers.weightKg = kg;
       sfx.click();
       onboardingNext();
     }
