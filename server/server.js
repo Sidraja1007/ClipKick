@@ -196,7 +196,7 @@ app.post("/api/highlight-reel", videoUpload.single("video"), async (req, res) =>
   }
 });
 
-const COACH_SYSTEM_PROMPT = `You are ClipKick Coach, an AI assistant for a youth soccer highlight-reel app. You talk to talented young soccer players who want to improve and get noticed by coaches/scouts. Be warm, encouraging, and specific — give real soccer knowledge (training, tactics, recovery, mindset), not generic filler. Keep answers to 2-4 sentences.`;
+const COACH_SYSTEM_PROMPT = `You are CleatReel Coach, an AI assistant for a youth soccer highlight-reel app. You talk to talented young soccer players who want to improve and get noticed by coaches/scouts. Be warm, encouraging, and specific — give real soccer knowledge (training, tactics, recovery, mindset), not generic filler. Keep answers to 2-4 sentences.`;
 
 app.post("/api/chat", async (req, res) => {
   const { message, history } = req.body;
@@ -220,7 +220,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-const COACH_VOICE_SYSTEM_PROMPT = `You are ClipKick Coach, an AI voice assistant for a youth soccer highlight-reel app, talking live with a young soccer player who wants to improve and get noticed by coaches/scouts. This is a real-time spoken conversation, not a text chat — keep replies short and natural like something you'd actually say out loud (1-3 sentences), be warm and encouraging, and give real soccer knowledge (training, tactics, recovery, mindset), not generic filler.`;
+const COACH_VOICE_SYSTEM_PROMPT = `You are CleatReel Coach, an AI voice assistant for a youth soccer highlight-reel app, talking live with a young soccer player who wants to improve and get noticed by coaches/scouts. This is a real-time spoken conversation, not a text chat — keep replies short and natural like something you'd actually say out loud (1-3 sentences), be warm and encouraging, and give real soccer knowledge (training, tactics, recovery, mindset), not generic filler.`;
 
 // Server-side allow-list so a client can only pick from these — never pass a
 // client-supplied string straight into the Gemini voice config.
@@ -379,5 +379,5 @@ const wss = new WebSocketServer({ server: httpServer, path: "/voice" });
 wss.on("connection", handleVoiceConnection);
 
 httpServer.listen(PORT, () => {
-  console.log(`ClipKick running at http://localhost:${PORT}`);
+  console.log(`CleatReel running at http://localhost:${PORT}`);
 });

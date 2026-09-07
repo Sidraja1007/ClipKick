@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ClipKick — AI Highlight Reels for Soccer Players</title>
+  <title>CleatReel — AI Highlight Reels for Soccer Players</title>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SR2KGVY647"></script>
   <script>
@@ -12,17 +12,17 @@
     gtag('js', new Date());
     gtag('config', 'G-SR2KGVY647');
   </script>
-  <meta name="description" content="Upload a full soccer match or training video and ClipKick's AI finds your best goals, assists, dribbles, tackles, and saves — then builds a timestamped highlight reel with coaching feedback." />
-  <link rel="canonical" href="https://clipkick-your-highlight-reels-begin-here.netlify.app/" />
+  <meta name="description" content="Upload a full soccer match or training video and CleatReel's AI finds your best goals, assists, dribbles, tackles, and saves — then builds a timestamped highlight reel with coaching feedback." />
+  <link rel="canonical" href="https://cleatreel.netlify.app/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="ClipKick — AI Highlight Reels for Soccer Players" />
-  <meta property="og:description" content="Upload a full soccer match or training video and ClipKick's AI finds your best moments — then builds a timestamped highlight reel with coaching feedback." />
-  <meta property="og:url" content="https://clipkick-your-highlight-reels-begin-here.netlify.app/" />
-  <meta property="og:image" content="https://clipkick-your-highlight-reels-begin-here.netlify.app/og-image.png" />
+  <meta property="og:title" content="CleatReel — AI Highlight Reels for Soccer Players" />
+  <meta property="og:description" content="Upload a full soccer match or training video and CleatReel's AI finds your best moments — then builds a timestamped highlight reel with coaching feedback." />
+  <meta property="og:url" content="https://cleatreel.netlify.app/" />
+  <meta property="og:image" content="https://cleatreel.netlify.app/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="ClipKick — AI Highlight Reels for Soccer Players" />
-  <meta name="twitter:description" content="Upload a full soccer match or training video and ClipKick's AI finds your best moments — then builds a timestamped highlight reel with coaching feedback." />
-  <meta name="twitter:image" content="https://clipkick-your-highlight-reels-begin-here.netlify.app/og-image.png" />
+  <meta name="twitter:title" content="CleatReel — AI Highlight Reels for Soccer Players" />
+  <meta name="twitter:description" content="Upload a full soccer match or training video and CleatReel's AI finds your best moments — then builds a timestamped highlight reel with coaching feedback." />
+  <meta name="twitter:image" content="https://cleatreel.netlify.app/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -580,9 +580,9 @@
     <div class="overlay" id="overlay"></div>
     <aside class="sidebar" id="sidebar">
       <div class="logo">
-        <div class="logo-mark">CK</div>
+        <div class="logo-mark">CR</div>
         <div>
-          <div class="logo-text">CLIPKICK</div>
+          <div class="logo-text">CLEATREEL</div>
           <div class="logo-sub">AI Highlight Reels</div>
         </div>
       </div>
@@ -665,7 +665,7 @@
         <section class="view active" id="view-home">
           <div class="hero">
             <h1>Your AI soccer coach, <em>all in one place</em>.</h1>
-            <p>ClipKick turns your game footage into a highlight reel, gives you real coaching feedback (by text or voice), personalized training tips, and monthly progress check-ins — everything a youth soccer player needs to improve and get noticed, in one app.</p>
+            <p>CleatReel turns your game footage into a highlight reel, gives you real coaching feedback (by text or voice), personalized training tips, and monthly progress check-ins — everything a youth soccer player needs to improve and get noticed, in one app.</p>
           </div>
         </section>
 
@@ -673,7 +673,7 @@
         <section class="view" id="view-reel">
           <div class="hero" id="heroSection">
             <h1>Turn your game footage into a <em>highlight reel</em> that gets you noticed.</h1>
-            <p>Upload a full match or training video. ClipKick's AI finds your best goals, assists, dribbles, tackles, and saves — then builds a timestamped highlight clip list, plus feedback on what you did well and what to work on.</p>
+            <p>Upload a full match or training video. CleatReel's AI finds your best goals, assists, dribbles, tackles, and saves — then builds a timestamped highlight clip list, plus feedback on what you did well and what to work on.</p>
           </div>
           <div id="reelFlowRoot"></div>
         </section>
@@ -789,7 +789,7 @@
     <div class="settings-modal">
       <button class="settings-close" onclick="closeSettings()" aria-label="Close settings">&times;</button>
       <h2>Settings</h2>
-      <p style="font-size:13px;color:var(--text-muted);">Customize how ClipKick looks, sounds, and how your Coach talks to you.</p>
+      <p style="font-size:13px;color:var(--text-muted);">Customize how CleatReel looks, sounds, and how your Coach talks to you.</p>
 
       <div class="settings-section">
         <h3>Appearance</h3>
@@ -807,7 +807,7 @@
     // When the frontend is hosted separately from the backend (e.g. static site on
     // Vercel, API server on Render/Railway), set this to the backend's full URL.
     // Leave empty when frontend and backend are served from the same origin (local dev).
-    const API_BASE = "https://clipkick-api-production.up.railway.app";
+    const API_BASE = "https://cleatreel-api.onrender.com";
 
     /* ---------- Sound effects (synthesized, no audio files) ---------- */
     let soundEnabled = true;
@@ -1050,14 +1050,14 @@
       { type: "question", key: "age", question: "How old are you?", kind: "number", unit: "years old", placeholder: "e.g. 12", min: 4 },
       { type: "question", key: "position", question: "What position do you play?", kind: "choice", options: ["Forward", "Midfielder", "Defender", "Goalkeeper"] },
       { type: "question", key: "skillLevel", question: "What's your current skill level?", kind: "choice", options: ["Beginner", "Intermediate", "Advanced", "Competitive / Elite"] },
-      { type: "fact", icon: "⚽", text: "Pro scouts often form an impression within the first 30 seconds of match footage — a tight highlight reel matters more than a full match tape.", tie: "That's exactly what ClipKick builds for you automatically." },
+      { type: "fact", icon: "⚽", text: "Pro scouts often form an impression within the first 30 seconds of match footage — a tight highlight reel matters more than a full match tape.", tie: "That's exactly what CleatReel builds for you automatically." },
       { type: "question", key: "strongFoot", question: "Which is your strongest foot?", kind: "choice", options: ["Right", "Left", "Both"] },
       { type: "question", key: "goal", question: "What's your main goal right now?", kind: "choice", options: ["Get recruited by a team or college", "Improve for my current team", "Prepare for tryouts", "Just get better for fun"] },
-      { type: "fact", icon: "🧠", text: "Sports science backs this: watching yourself perform a skill — not just being told about it — speeds up how fast your brain corrects mistakes. It's called video feedback learning.", tie: "ClipKick's timestamped moments give you exactly that — a fast way to actually see your best (and worst) plays, not just hear about them." },
+      { type: "fact", icon: "🧠", text: "Sports science backs this: watching yourself perform a skill — not just being told about it — speeds up how fast your brain corrects mistakes. It's called video feedback learning.", tie: "CleatReel's timestamped moments give you exactly that — a fast way to actually see your best (and worst) plays, not just hear about them." },
       { type: "question", key: "improveArea", question: "What do you want to improve most?", kind: "choice", options: ["Speed & agility", "First touch & ball control", "Shooting & finishing", "Passing & vision", "Defending & tackling", "Fitness & stamina"] },
       { type: "question", key: "heightCm", question: "What's your height?", kind: "height", units: ["cm", "ft"] },
       { type: "question", key: "weightKg", question: "What's your weight?", kind: "weight", units: ["kg", "lb"] },
-      { type: "fact", icon: "📊", text: "A pro player's actual ball-contact time in a 90-minute match is only a couple of minutes — everything else is positioning, movement, and decision-making off the ball.", tie: "ClipKick's AI doesn't just look for goals — it catches the off-ball movement and positioning that make you look like a smarter player." },
+      { type: "fact", icon: "📊", text: "A pro player's actual ball-contact time in a 90-minute match is only a couple of minutes — everything else is positioning, movement, and decision-making off the ball.", tie: "CleatReel's AI doesn't just look for goals — it catches the off-ball movement and positioning that make you look like a smarter player." },
       { type: "loading" },
     ];
     let onboardingIndex = 0;
@@ -1108,7 +1108,7 @@
 
       if (step.type === "welcome") {
         root.innerHTML = `
-          <h1>Let's set up your <em>ClipKick</em>.</h1>
+          <h1>Let's set up your <em>CleatReel</em>.</h1>
           <p class="sub">A few quick questions so your training tips, feedback, and highlight reels actually fit you — takes under a minute.</p>
           <button class="btn btn-primary" onclick="onboardingNext()">Get started →</button>`;
       } else if (step.type === "question") {
@@ -1193,7 +1193,7 @@
               </svg>
               <div class="onboarding-percent" id="onboardingPercent">0%</div>
             </div>
-            <h1 style="font-size:20px;margin-bottom:6px;">Personalizing your ClipKick</h1>
+            <h1 style="font-size:20px;margin-bottom:6px;">Personalizing your CleatReel</h1>
             <div class="onboarding-status" id="onboardingStatus">Analyzing your answers…</div>
           </div>`;
         runOnboardingLoading();
@@ -1344,7 +1344,7 @@
 
     /* ---------- Guided product tour (first run, right after onboarding) ---------- */
     const TOUR_STEPS = [
-      { selector: ".logo", title: "Welcome to ClipKick", text: "Everything lives in this sidebar — let's do a 30-second tour." },
+      { selector: ".logo", title: "Welcome to CleatReel", text: "Everything lives in this sidebar — let's do a 30-second tour." },
       { selector: '.nav-item[data-view="reel"]', title: "Highlight Reel", text: "Upload your match or training footage — AI finds your best goals, assists, and plays automatically.", openSidebar: true },
       { selector: '.nav-item[data-view="chat"]', title: "Coach Chat", text: "Ask your AI coach anything by text, or tap the mic for a live voice conversation.", openSidebar: true },
       { selector: '.nav-item[data-view="tips"]', title: "Training Tips & Check-Ins", text: "Get personalized drills and monthly progress reviews based on your reels.", openSidebar: true },
@@ -1424,7 +1424,7 @@
     const deletedReels = [];
     let selectedReelId = null;
 
-    const GREETING_MESSAGE = { from: "them", text: "Hey! I'm your ClipKick Coach 👋 Ask me anything about training, tactics, recovery, or how to make the most of your highlight reels." };
+    const GREETING_MESSAGE = { from: "them", text: "Hey! I'm your CleatReel Coach 👋 Ask me anything about training, tactics, recovery, or how to make the most of your highlight reels." };
     const coachMessages = [{ ...GREETING_MESSAGE }];
     const chatSessions = [];
     const deletedChatSessions = [];
@@ -1545,7 +1545,7 @@
           <div class="upload-zone" id="reelUploadZone">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <h3>Drop your game video here or click to upload</h3>
-            <p>Full match or training footage — ClipKick's AI finds your best moments</p>
+            <p>Full match or training footage — CleatReel's AI finds your best moments</p>
             <button class="btn btn-primary" type="button">Choose video</button>
             <input type="file" accept="video/*" id="reelFileInput" style="display:none" />
           </div>`;
